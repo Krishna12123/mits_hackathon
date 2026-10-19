@@ -1,0 +1,15 @@
+"""Report Model for downloadable outputs."""
+from sqlalchemy import Column, String
+from app.models.base import Base
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(String(32), primary_key=True, index=True)
+    title = Column(String(256), nullable=False)
+    type = Column(String(32), nullable=False)  # PDF, GeoTIFF, Shapefile, GeoJSON
+    size = Column(String(32), nullable=True)
+    status = Column(String(32), default="ready")  # ready, processing, failed
+    created_at = Column(String(64), nullable=True)
+    file_path = Column(String(512), nullable=True)

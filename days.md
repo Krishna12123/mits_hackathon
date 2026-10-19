@@ -27,11 +27,11 @@
 - [ ] AOI clipping and co-registration logic
 
 ### ⚙️ Krishna (Backend)
-- [ ] Set up Sentinel-1 SAR data ingestion
-- [ ] Load static layers: DEM, JRC (permanent water), OSM settlements
-- [ ] Define project data models and folder structure
-- [ ] Set up database (PostGIS / SQLite) for metadata storage
-- [ ] API skeleton: define all REST endpoints
+- [x] Set up Sentinel-1 SAR data ingestion
+- [x] Load static layers: DEM, JRC (permanent water), OSM settlements
+- [x] Define project data models and folder structure
+- [x] Set up database (PostGIS / SQLite) for metadata storage
+- [x] API skeleton: define all REST endpoints
 
 ### 🎨 Garima (Frontend)
 - [ ] Initialize React / Next.js project
@@ -186,8 +186,8 @@
 | Feature | Owner | Status |
 |---------|-------|--------|
 | Sentinel-2 ingestion | Bipasha | ⬜ |
-| Sentinel-1 SAR ingestion | Krishna | ⬜ |
-| DEM / JRC / OSM static layers | Krishna | ⬜ |
+| Sentinel-1 SAR ingestion | Krishna | ✅ |
+| DEM / JRC / OSM static layers | Krishna | ✅ |
 | Cloud masking & preprocessing | Bipasha | ⬜ |
 | NDWI computation | Bipasha | ⬜ |
 | MNDWI computation | Bipasha | ⬜ |
