@@ -1,0 +1,7 @@
+node_modules/
+floodlens-frontend/dist/
+floodlens-backend/__pycache__/
+floodlens-backend/venv/
+floodlens-backend/.env
+*.pyc
+.DS_Store
