@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api',
+  // PENDING: confirm base URL path with backend team.
+// Falls back to '/api' so the existing dev-proxy setup keeps working.
+baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 })
