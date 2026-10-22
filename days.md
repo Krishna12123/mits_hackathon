@@ -126,11 +126,11 @@
 - [ ] Expose `/api/impact` endpoint
 
 ### ⚙️ Krishna (Backend)
-- [ ] Generate **Settlement Impact CSV Report** (name, population, flood %, flag)
-- [ ] Set up **Live Dashboard** data endpoint (WebSocket or polling `/api/live`)
-- [ ] Add background job queue for long-running detections (Celery / asyncio)
-- [ ] Final API integration testing (all endpoints end-to-end)
-- [ ] Write API documentation (Swagger / README)
+- [x] Generate **Settlement Impact CSV Report** (name, population, flood %, flag)
+- [x] Set up **Live Dashboard** data endpoint (WebSocket or polling `/api/live`)
+- [x] Add background job queue for long-running detections (Celery / asyncio)
+- [x] Final API integration testing (all endpoints end-to-end)
+- [x] Write API documentation (Swagger / README)
 
 ### 🎨 Garima (Frontend)
 - [ ] Build **Settlement Impact Map Layer** — color-coded settlement polygons
@@ -194,18 +194,18 @@
 | AWEI computation | Bipasha | ⬜ |
 | SAR VV/VH processing | Bipasha | ⬜ |
 | Otsu thresholding | Bipasha | ⬜ |
-| Majority vote ensemble | Krishna | ⬜ |
-| Change detection (post - JRC) | Krishna | ⬜ |
+| Majority vote ensemble | Krishna | ✅ |
+| Change detection (post - JRC) | Krishna | ✅ |
 | HAND + slope refinement | Bipasha | ⬜ |
 | Speckle cleaning | Bipasha | ⬜ |
 | SAR gap fill | Bipasha | ⬜ |
-| Accuracy gate (IoU, F1) | Krishna | ⬜ |
-| Threshold retune feedback loop | Krishna | ⬜ |
+| Accuracy gate (IoU, F1) | Krishna | ✅ |
+| Threshold retune feedback loop | Krishna | ✅ |
 | Settlement impact overlay | Bipasha | ⬜ |
 | Flood % per settlement | Bipasha | ⬜ |
-| GeoTIFF / GeoJSON export | Krishna | ⬜ |
-| Settlement CSV report | Krishna | ⬜ |
-| Live dashboard backend | Krishna | ⬜ |
+| GeoTIFF / GeoJSON export | Krishna | ✅ |
+| Settlement CSV report | Krishna | ✅ |
+| Live dashboard backend | Krishna | ✅ |
 | Base map + AOI selector | Garima | ⬜ |
 | Flood map layer viewer | Garima | ⬜ |
 | Accuracy dashboard | Garima | ⬜ |

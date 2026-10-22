@@ -32,12 +32,26 @@ def get_db():
 
 def init_db():
     """Initializes tables and seeds default records if empty."""
+    from sqlalchemy import text
     from app.models.job import Job
     from app.models.settlement import Settlement
     from app.models.report import Report
     from app.models.accuracy import AccuracyRecord
 
     Base.metadata.create_all(bind=engine)
+
+    # Lightweight schema upgrade for SQLite if columns are missing
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE flood_jobs ADD COLUMN progress INTEGER DEFAULT 0"))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
+        try:
+            conn.execute(text("ALTER TABLE flood_jobs ADD COLUMN stage VARCHAR(64) DEFAULT 'queued'"))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
 
     # Seed default mock data if settlements table is empty
     db = SessionLocal()
@@ -55,7 +69,20 @@ def init_db():
             db.add_all(default_settlements)
             db.commit()
 
-        if db.query(Report).count() == 0:
+        # Seed reports
+        csv_rpt = db.query(Report).filter(Report.id == "RPT-0037").first()
+        if not csv_rpt:
+            db.merge(Report(
+                id="RPT-0037",
+                title="Settlement Impact CSV Report",
+                type="CSV",
+                size="0.4 MB",
+                status="ready",
+                created_at="2026-10-18T18:00:00Z"
+            ))
+            db.commit()
+
+        if db.query(Report).count() <= 1:
             default_reports = [
                 Report(id="RPT-0041", title="Bihar Flood Impact Report", type="PDF", size="3.8 MB", status="ready", created_at="2026-10-19T10:12:00Z"),
                 Report(id="RPT-0040", title="Flood Extent GeoTIFF", type="GeoTIFF", size="42.1 MB", status="ready", created_at="2026-10-19T10:08:00Z"),

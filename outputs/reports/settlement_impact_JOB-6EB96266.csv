@@ -1,0 +1,8 @@
+Settlement Name,District,State,Population,Flooded %,Impact Flag,Homes Affected,Farmland Flooded (ha)
+Pusa,Darbhanga,Bihar,14800,88.0%,🔴 Severely Affected,2700,430.0
+Hayaghat,Darbhanga,Bihar,42300,78.0%,🔴 Severely Affected,8200,1240.0
+Sheohar,Sitamarhi,Bihar,28900,63.0%,🟡 Partially Affected,5400,760.0
+Benipur,Darbhanga,Bihar,31500,55.0%,🟡 Partially Affected,6100,890.0
+Runnisaidpur,Sitamarhi,Bihar,18700,41.0%,🟡 Partially Affected,3900,510.0
+Sitamarhi,Sitamarhi,Bihar,94200,32.0%,🟡 Partially Affected,17300,2100.0
+Muzaffarpur,Muzaffarpur,Bihar,354000,11.0%,🟢 Safe,64000,3200.0

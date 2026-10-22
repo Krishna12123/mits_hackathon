@@ -1,6 +1,6 @@
 """Job Model for Flood Detection Tasks."""
 import datetime
-from sqlalchemy import Column, String, Float, DateTime, JSON, Text
+from sqlalchemy import Column, String, Float, Integer, DateTime, JSON, Text
 from app.models.base import Base
 
 
@@ -9,6 +9,8 @@ class Job(Base):
 
     id = Column(String(32), primary_key=True, index=True)
     status = Column(String(32), default="queued", index=True)  # queued, running, completed, failed
+    progress = Column(Integer, default=0)  # 0 to 100 percentage
+    stage = Column(String(64), default="queued")  # queued, data_ingestion, index_computation, change_detection, settlement_impact, completed, failed
     satellite = Column(String(64), default="Sentinel-2")
     index = Column(String(32), default="NDWI")
     threshold = Column(Float, default=0.3)
@@ -27,5 +29,5 @@ class Job(Base):
     result_geojson = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))

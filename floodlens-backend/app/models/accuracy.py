@@ -14,4 +14,4 @@ class AccuracyRecord(Base):
     f1_score = Column(Float, nullable=False)
     otsu_threshold = Column(Float, nullable=False)
     passed_gate = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))

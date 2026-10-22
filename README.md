@@ -32,12 +32,23 @@ mits hackathon/
 └── floodlens-backend/       # FastAPI Python
     ├── main.py
     ├── requirements.txt
-    └── app/routers/
-        ├── flood.py          # Detection pipeline API
-        ├── settlements.py    # OSM settlement data
-        ├── reports.py        # GeoTIFF/PDF exports
-        ├── config_router.py  # AOI configuration
-        └── auth.py           # JWT authentication
+    ├── README.md             # Complete API documentation & curl guide
+    ├── app/
+    │   ├── routers/
+    │   │   ├── flood.py          # Detection pipeline & background queue API
+    │   │   ├── settlements.py    # OSM settlement impact & CSV export
+    │   │   ├── live.py           # Live monitoring dashboard telemetry
+    │   │   ├── reports.py        # GeoTIFF/PDF/CSV exports
+    │   │   ├── accuracy.py       # Accuracy gate & retuning feedback loop
+    │   │   ├── config_router.py  # AOI configuration
+    │   │   ├── ws.py             # Real-time WebSocket stream (/ws/updates, /ws/live)
+    │   │   └── auth.py           # JWT authentication
+    │   └── services/
+    │       ├── detection_service.py
+    │       ├── job_queue.py      # Async background queue & worker pool
+    │       ├── report_service.py # Settlement CSV report generator
+    │       └── accuracy_service.py
+    └── tests/                # 38 End-to-end and unit tests
 ```
 
 ## Quick Start

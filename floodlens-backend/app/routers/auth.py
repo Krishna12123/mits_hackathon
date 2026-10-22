@@ -23,7 +23,7 @@ except ImportError:
 
 def create_access_token(data: dict, expires_delta: datetime.timedelta = None):
     to_encode = data.copy()
-    expire = datetime.datetime.utcnow() + (expires_delta or datetime.timedelta(hours=24))
+    expire = datetime.datetime.now(datetime.timezone.utc) + (expires_delta or datetime.timedelta(hours=24))
     to_encode.update({"exp": expire})
     if JOSE_AVAILABLE and jwt:
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

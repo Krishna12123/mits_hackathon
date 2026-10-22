@@ -3,15 +3,27 @@ Settlements Router
 GET /api/settlements/affected — List affected settlements with flood data
 GET /api/settlements/{id}     — Get settlement detail
 """
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Query, Depends, HTTPException, Response
 from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.settlement import Settlement
 from app.models.schemas import SettlementResponse, SettlementListResponse
+from app.services.report_service import generate_settlement_impact_csv_string
 
 router = APIRouter()
+
+
+@router.get("/export/csv")
+async def export_settlements_csv(db: Session = Depends(get_db)):
+    """Exports all settlement impact records as a downloadable CSV report."""
+    csv_content = generate_settlement_impact_csv_string(db)
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="settlement_impact_report.csv"'},
+    )
 
 
 @router.get("/affected", response_model=SettlementListResponse)

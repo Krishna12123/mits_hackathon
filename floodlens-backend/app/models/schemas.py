@@ -58,7 +58,16 @@ class JobResponse(BaseModel):
 class JobStatusResponse(BaseModel):
     job_id: str
     status: str
+    progress: int = 0
+    stage: Optional[str] = None
     error_message: Optional[str] = None
+
+
+class QueueStatusResponse(BaseModel):
+    queue_size: int
+    active_workers: int
+    worker_status: str
+    active_jobs: List[str] = []
 
 
 class FloodSummaryResponse(BaseModel):
@@ -68,6 +77,52 @@ class FloodSummaryResponse(BaseModel):
     ndwi_score: float
     satellite: str
     last_updated: str
+
+
+# --- Live Dashboard Schemas ---
+class StatCardMetric(BaseModel):
+    title: str
+    value: str
+    unit: str
+    change: Optional[float] = None
+    color: str
+    description: str
+
+
+class TimelinePoint(BaseModel):
+    date: str
+    area: float
+
+
+class DistrictMetric(BaseModel):
+    name: str
+    flooded: float
+    normal: float
+
+
+class RecentJobSummary(BaseModel):
+    id: str
+    status: str
+    source: str
+    date: str
+    area: str
+
+
+class SettlementImpactSummary(BaseModel):
+    total: int
+    severely_affected: int
+    partially_affected: int
+    safe: int
+    total_population_affected: int
+
+
+class LiveDashboardResponse(BaseModel):
+    stats: List[StatCardMetric]
+    timeline: List[TimelinePoint]
+    districts: List[DistrictMetric]
+    recent_jobs: List[RecentJobSummary]
+    settlement_summary: SettlementImpactSummary
+    timestamp: str
 
 
 # --- Config Schemas ---

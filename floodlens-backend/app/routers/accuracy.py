@@ -1,7 +1,8 @@
 """
 Accuracy Gate Router
-GET  /api/accuracy/{job_id} — Fetch accuracy scores & iteration history for a job
 GET  /api/accuracy         — Current / latest accuracy summary
+GET  /api/accuracy/summary — Alias for latest accuracy summary
+GET  /api/accuracy/{job_id} — Fetch accuracy scores & iteration history for a job
 POST /api/accuracy/evaluate — Trigger accuracy evaluation and retuning loop
 """
 import uuid
@@ -23,6 +24,33 @@ from app.services.accuracy_service import accuracy_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("", response_model=AccuracyResponse)
+@router.get("/summary", response_model=AccuracyResponse)
+async def get_latest_accuracy(db: Session = Depends(get_db)):
+    """Returns accuracy metrics and iteration history for the most recent job."""
+    latest_record = db.query(AccuracyRecord).order_by(AccuracyRecord.id.desc()).first()
+
+    if latest_record:
+        return await get_job_accuracy(latest_record.job_id, db)
+
+    # If no records exist yet, evaluate baseline demo AOI
+    latest_job = db.query(Job).order_by(Job.created_at.desc()).first()
+    job_id = latest_job.id if latest_job else "JOB-" + str(uuid.uuid4())[:8].upper()
+    lat = latest_job.aoi_lat if latest_job else 26.3
+    lon = latest_job.aoi_lon if latest_job else 85.8
+    radius = latest_job.aoi_radius_km if latest_job else 150.0
+
+    result = await accuracy_service.run_accuracy_gate(
+        job_id=job_id,
+        lat=lat,
+        lon=lon,
+        radius_km=radius,
+        target_iou=0.75,
+        db=db,
+    )
+    return AccuracyResponse(**result)
 
 
 @router.get("/{job_id}", response_model=AccuracyResponse)
@@ -72,32 +100,6 @@ async def get_job_accuracy(job_id: str, db: Session = Depends(get_db)):
         history=history_items,
         status="PASSED" if latest.passed_gate else "BELOW_TARGET",
     )
-
-
-@router.get("", response_model=AccuracyResponse)
-async def get_latest_accuracy(db: Session = Depends(get_db)):
-    """Returns accuracy metrics and iteration history for the most recent job."""
-    latest_record = db.query(AccuracyRecord).order_by(AccuracyRecord.id.desc()).first()
-
-    if latest_record:
-        return await get_job_accuracy(latest_record.job_id, db)
-
-    # If no records exist yet, evaluate baseline demo AOI
-    latest_job = db.query(Job).order_by(Job.created_at.desc()).first()
-    job_id = latest_job.id if latest_job else "JOB-" + str(uuid.uuid4())[:8].upper()
-    lat = latest_job.aoi_lat if latest_job else 26.3
-    lon = latest_job.aoi_lon if latest_job else 85.8
-    radius = latest_job.aoi_radius_km if latest_job else 150.0
-
-    result = await accuracy_service.run_accuracy_gate(
-        job_id=job_id,
-        lat=lat,
-        lon=lon,
-        radius_km=radius,
-        target_iou=0.75,
-        db=db,
-    )
-    return AccuracyResponse(**result)
 
 
 @router.post("/evaluate", response_model=AccuracyResponse)

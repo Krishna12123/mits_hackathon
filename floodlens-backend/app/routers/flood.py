@@ -20,11 +20,13 @@ from app.models.schemas import (
     DetectRequest,
     JobResponse,
     JobStatusResponse,
+    QueueStatusResponse,
     FloodSummaryResponse,
     DetectResultResponse,
 )
 from app.routers.ws import manager
 from app.services.detection_service import detection_pipeline
+from app.services.job_queue import job_queue
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +61,33 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
     job = db.query(Job).filter(Job.id == job_id).first()
     if job:
         job.status = "completed"
+        job.stage = "completed"
+        job.progress = 100
         job.flood_extent_km2 = result["flood_extent_km2"]
         job.affected_districts = 3
         job.at_risk_population = int(result["flood_extent_km2"] * 4800)
         job.ndwi_score = result["otsu_thresholds"].get("NDWI", 0.74)
         job.result_geojson = result["geojson"]
         db.commit()
+
+    # Generate and register settlement impact CSV report
+    try:
+        from app.services.report_service import generate_settlement_impact_csv
+        csv_path = generate_settlement_impact_csv(job_id, db)
+        csv_size = f"{round(os.path.getsize(csv_path) / 1024.0, 1)} KB" if os.path.exists(csv_path) else "0.4 MB"
+        csv_rpt = Report(
+            id=f"{job_id}-CSV",
+            title=f"Settlement Impact Report ({job_id})",
+            type="CSV",
+            size=csv_size,
+            status="ready",
+            created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            file_path=csv_path,
+        )
+        db.merge(csv_rpt)
+        db.commit()
+    except Exception as e:
+        logger.warning(f"Could not generate settlement CSV for {job_id}: {e}")
 
     # Register intermediate GeoTIFF outputs as reports
     if result.get("geotiff_outputs"):
@@ -189,10 +212,18 @@ async def detect(req: DetectRequest, background_tasks: BackgroundTasks, db: Sess
             message="Detection completed.",
         )
 
-    # Schedule background worker task
-    background_tasks.add_task(_run_detection_pipeline, job_id, req.model_dump())
+    # Dispatch to background job queue
+    if not job_queue.is_running:
+        background_tasks.add_task(job_queue.start)
+    background_tasks.add_task(job_queue.enqueue, job_id, req.model_dump())
 
-    return JobResponse(job_id=job_id, status="queued", message="Detection job scheduled.")
+    return JobResponse(job_id=job_id, status="queued", message="Detection job scheduled in background queue.")
+
+
+@router.get("/queue", response_model=QueueStatusResponse)
+async def get_queue_status():
+    """Returns background detection job queue metrics and active worker status."""
+    return job_queue.get_status()
 
 
 @router.get("/status/{job_id}", response_model=JobStatusResponse)
@@ -201,7 +232,13 @@ async def status(job_id: str, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    return JobStatusResponse(job_id=job.id, status=job.status, error_message=job.error_message)
+    return JobStatusResponse(
+        job_id=job.id,
+        status=job.status,
+        progress=job.progress or (100 if job.status == "completed" else 0),
+        stage=job.stage or job.status,
+        error_message=job.error_message,
+    )
 
 
 @router.get("/results/{job_id}")
