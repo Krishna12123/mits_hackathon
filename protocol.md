@@ -174,11 +174,11 @@ src/data/
 - [ ] Otsu thresholding per scene for each index
 
 **Krishna (Backend)**
-- [ ] Implement majority vote ensemble (combine all 4 index results)
-- [ ] Implement Change Detection: post-flood minus permanent water (JRC baseline)
-- [ ] Expose `/api/detect` endpoint
-- [ ] Save intermediate GeoTIFF outputs
-- [ ] Write unit tests for detection logic
+- [x] Implement majority vote ensemble (combine all 4 index results)
+- [x] Implement Change Detection: post-flood minus permanent water (JRC baseline)
+- [x] Expose `/api/detect` endpoint
+- [x] Save intermediate GeoTIFF outputs
+- [x] Write unit tests for detection logic
 
 **Garima (Frontend)**
 - [ ] Build Flood Map Viewer — display GeoTIFF flood mask overlay

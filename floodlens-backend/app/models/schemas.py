@@ -32,6 +32,21 @@ class DetectRequest(BaseModel):
     aoi_radius_km: int = Field(default=150, ge=1, le=1000)
     pre_date: str = Field(default="2026-10-11")
     post_date: str = Field(default="2026-10-19")
+    min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble (1-4)")
+    save_geotiff: bool = Field(default=True, description="Save intermediate GeoTIFF rasters")
+    sync: bool = Field(default=False, description="Run synchronously and return mask immediately")
+
+
+class DetectResultResponse(BaseModel):
+    job_id: str
+    status: str
+    flood_extent_km2: float
+    permanent_water_km2: float
+    total_water_km2: float
+    geojson: Dict[str, Any]
+    geotiff_outputs: Dict[str, str] = {}
+    otsu_thresholds: Dict[str, float] = {}
+    message: Optional[str] = None
 
 
 class JobResponse(BaseModel):

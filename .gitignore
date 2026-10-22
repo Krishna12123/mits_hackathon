@@ -4,6 +4,7 @@ floodlens-backend/__pycache__/
 floodlens-backend/venv/
 floodlens-backend/.venv/
 floodlens-backend/.env
+floodlens-backend/outputs/
 *.pyc
 *.db
 .DS_Store
