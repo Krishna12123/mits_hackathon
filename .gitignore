@@ -5,6 +5,7 @@ floodlens-backend/venv/
 floodlens-backend/.venv/
 floodlens-backend/.env
 floodlens-backend/outputs/
+outputs/
 *.pyc
 *.db
 .DS_Store

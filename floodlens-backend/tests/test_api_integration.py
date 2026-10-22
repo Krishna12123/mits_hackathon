@@ -356,5 +356,39 @@ class TestAPIIntegration(unittest.TestCase):
         asyncio.run(run_q())
 
 
+    def test_13_frontend_payload_compatibility(self):
+        """Frontend submitAnalysis payload format with region and satellite_source."""
+        payload = {
+            "region": "nepal-terai",
+            "district": None,
+            "pre_flood_start": "2026-10-11T00:00:00.000Z",
+            "pre_flood_end": "2026-10-12T00:00:00.000Z",
+            "post_flood_start": "2026-10-18T00:00:00.000Z",
+            "post_flood_end": "2026-10-19T00:00:00.000Z",
+            "satellite_source": "sentinel-2",
+            "indices": ["NDWI", "MNDWI"],
+            "threshold": 0.3,
+            "use_hand": True,
+            "slope_threshold": 10,
+            "speckle_filter": True,
+            "accuracy_threshold": 0.75,
+            "sync": True,
+        }
+        res = self.client.post("/api/flood/detect", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("job_id", data)
+        self.assertEqual(data["status"], "completed")
+
+        # Test results format for SuccessState
+        res_job = self.client.get(f"/api/flood/results/{data['job_id']}")
+        self.assertEqual(res_job.status_code, 200)
+        job_result = res_job.json()
+        self.assertIn("floodedAreaKm2", job_result)
+        self.assertIn("affectedSettlements", job_result)
+        self.assertIn("percentageImpact", job_result)
+        self.assertIn("geojson", job_result)
+
+
 if __name__ == "__main__":
     unittest.main()

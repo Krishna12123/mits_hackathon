@@ -1,5 +1,5 @@
 """Pydantic Schemas for Request and Response validation."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional, List, Any, Dict
 
 
@@ -23,6 +23,8 @@ class UserResponse(BaseModel):
 
 # --- Flood Detection Schemas ---
 class DetectRequest(BaseModel):
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
     satellite: str = Field(default="Sentinel-2", description="Sentinel-2, Sentinel-1, or Landsat")
     index: str = Field(default="NDWI", description="NDWI, MNDWI, AWEI, or ALL")
     threshold: float = Field(default=0.3, ge=-1.0, le=1.0)
@@ -35,6 +37,55 @@ class DetectRequest(BaseModel):
     min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble (1-4)")
     save_geotiff: bool = Field(default=True, description="Save intermediate GeoTIFF rasters")
     sync: bool = Field(default=False, description="Run synchronously and return mask immediately")
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_frontend_fields(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        data = values.copy()
+
+        # Satellite source mapping
+        if "satellite_source" in data and not data.get("satellite"):
+            src = str(data["satellite_source"]).lower()
+            if "sar" in src or "sentinel-1" in src:
+                data["satellite"] = "Sentinel-1"
+            elif "landsat" in src:
+                data["satellite"] = "Landsat"
+            else:
+                data["satellite"] = "Sentinel-2"
+
+        # Date mappings
+        if "pre_flood_start" in data and data["pre_flood_start"]:
+            data["pre_date"] = str(data["pre_flood_start"])[:10]
+        elif "pre_flood_end" in data and data["pre_flood_end"]:
+            data["pre_date"] = str(data["pre_flood_end"])[:10]
+
+        if "post_flood_end" in data and data["post_flood_end"]:
+            data["post_date"] = str(data["post_flood_end"])[:10]
+        elif "post_flood_start" in data and data["post_flood_start"]:
+            data["post_date"] = str(data["post_flood_start"])[:10]
+
+        # Indices mapping
+        if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
+            data["index"] = data["indices"][0] if len(data["indices"]) == 1 else "ALL"
+
+        # Region coordinates mapping
+        region = str(data.get("region", "")).lower()
+        if "nepal-terai" in region:
+            data.setdefault("aoi_lat", 26.8)
+            data.setdefault("aoi_lon", 86.0)
+        elif "koshi" in region:
+            data.setdefault("aoi_lat", 26.6)
+            data.setdefault("aoi_lon", 87.0)
+        elif "madhesh" in region:
+            data.setdefault("aoi_lat", 26.9)
+            data.setdefault("aoi_lon", 85.5)
+        elif "lumbini" in region:
+            data.setdefault("aoi_lat", 27.6)
+            data.setdefault("aoi_lon", 83.4)
+
+        return data
 
 
 class DetectResultResponse(BaseModel):
@@ -51,16 +102,38 @@ class DetectResultResponse(BaseModel):
 
 class JobResponse(BaseModel):
     job_id: str
+    jobId: Optional[str] = None
     status: str
     message: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_job_id(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            jid = values.get("job_id") or values.get("jobId")
+            if jid:
+                values["job_id"] = jid
+                values["jobId"] = jid
+        return values
 
 
 class JobStatusResponse(BaseModel):
     job_id: str
+    jobId: Optional[str] = None
     status: str
     progress: int = 0
     stage: Optional[str] = None
     error_message: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_job_id(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            jid = values.get("job_id") or values.get("jobId")
+            if jid:
+                values["job_id"] = jid
+                values["jobId"] = jid
+        return values
 
 
 class QueueStatusResponse(BaseModel):
