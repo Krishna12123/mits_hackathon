@@ -9,11 +9,11 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'   },
-  { to: '/map',         icon: Map,             label: 'Flood Map'   },
-  { to: '/settlements', icon: Building2,       label: 'Settlements' },
-  { to: '/reports',     icon: FileText,        label: 'Reports'     },
-  { to: '/configure',   icon: Settings,        label: 'Configure'   },
+  { to: '/dashboard',              icon: LayoutDashboard, label: 'Dashboard'   },
+  { to: '/dashboard/map',          icon: Map,             label: 'Flood Map'   },
+  { to: '/dashboard/settlements',  icon: Building2,       label: 'Settlements' },
+  { to: '/dashboard/reports',      icon: FileText,        label: 'Reports'     },
+  { to: '/dashboard/configure',    icon: Settings,        label: 'Configure'   },
 ]
 
 export default function Sidebar() {
@@ -36,7 +36,7 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === '/dashboard'}
             className={({ isActive }) =>
               `nav-link ${isActive ? 'active' : ''}`
             }
