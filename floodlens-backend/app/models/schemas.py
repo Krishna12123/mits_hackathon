@@ -121,3 +121,39 @@ class ReportItem(BaseModel):
 
 class ReportListResponse(BaseModel):
     reports: List[ReportItem]
+
+
+# --- Accuracy Schemas ---
+class AccuracyIterationItem(BaseModel):
+    iteration: int
+    iou_score: float
+    f1_score: float
+    precision: float
+    recall: float
+    otsu_threshold: float
+    passed_gate: bool
+
+    class Config:
+        from_attributes = True
+
+
+class AccuracyResponse(BaseModel):
+    job_id: str
+    passed_gate: bool
+    target_iou: float
+    current_iou: float
+    current_f1: float
+    precision: float
+    recall: float
+    iterations_count: int
+    history: List[AccuracyIterationItem]
+    status: str
+
+
+class AccuracyEvaluateRequest(BaseModel):
+    job_id: Optional[str] = None
+    target_iou: float = Field(default=0.75, ge=0.1, le=1.0)
+    max_iterations: int = Field(default=3, ge=1, le=10)
+    aoi_lat: float = Field(default=26.3, ge=-90.0, le=90.0)
+    aoi_lon: float = Field(default=85.8, ge=-180.0, le=180.0)
+    aoi_radius_km: int = Field(default=150, ge=1, le=1000)

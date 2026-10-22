@@ -207,11 +207,11 @@ src/data/
 - [ ] Expose `/api/refine` endpoint
 
 **Krishna (Backend)**
-- [ ] Implement Accuracy Gate: IoU and F1 score vs reference mask
-- [ ] Implement re-run loop: if score below threshold → adjust Otsu → re-run
-- [ ] Set configurable accuracy target (default IoU > 0.75)
-- [ ] Log each iteration's accuracy scores to database
-- [ ] Expose `/api/accuracy` endpoint
+- [x] Implement Accuracy Gate: IoU and F1 score vs reference mask
+- [x] Implement re-run loop: if score below threshold → adjust Otsu → re-run
+- [x] Set configurable accuracy target (default IoU > 0.75)
+- [x] Log each iteration's accuracy scores to database
+- [x] Expose `/api/accuracy` endpoint
 
 **Garima (Frontend)**
 - [ ] Build Accuracy Dashboard panel

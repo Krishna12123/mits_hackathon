@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import init_db, get_db
 from app.models.job import Job
 from app.models.schemas import DetectRequest, DetectResultResponse
-from app.routers import flood, settlements, reports, config_router, auth, ws
+from app.routers import flood, settlements, reports, config_router, auth, ws, accuracy
 from app.routers.flood import execute_pipeline_sync
 
 # Ensure outputs directory exists
@@ -52,6 +52,7 @@ app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
 app.include_router(config_router.router, prefix="/api/config",       tags=["Config"])
+app.include_router(accuracy.router,      prefix="/api/accuracy",    tags=["Accuracy Gate"])
 app.include_router(ws.router,                                        tags=["Real-Time Stream"])
 
 
