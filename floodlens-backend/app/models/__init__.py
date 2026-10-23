@@ -27,6 +27,11 @@ from app.models.refine import (
     RefineRequest,
     RefineResponse,
 )
+from app.models.impact import (
+    ImpactRequest,
+    ImpactResponse,
+    SettlementImpactItem,
+)
 
 __all__ = [
     "Base",
@@ -51,4 +56,7 @@ __all__ = [
     "FloodStatusResponse",
     "RefineRequest",
     "RefineResponse",
+    "ImpactRequest",
+    "ImpactResponse",
+    "SettlementImpactItem",
 ]

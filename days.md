@@ -119,11 +119,11 @@
 > **Goal:** Impact assessment, report generation, all outputs working
 
 ### ⚙️ Bipasha (Backend)
-- [ ] Overlay flood mask with OSM settlement polygons
-- [ ] Calculate **flood % per settlement** (area intersection)
-- [ ] Flag settlements as: 🔴 Severely Affected / 🟡 Partially Affected / 🟢 Safe
-- [ ] Export final **Flood Map as GeoTIFF and GeoJSON**
-- [ ] Expose `/api/impact` endpoint
+- [x] Overlay flood mask with OSM settlement polygons
+- [x] Calculate **flood % per settlement** (area intersection)
+- [x] Flag settlements as: 🔴 Severely Affected / 🟡 Partially Affected / 🟢 Safe
+- [x] Export final **Flood Map as GeoTIFF and GeoJSON**
+- [x] Expose `/api/impact` endpoint
 
 ### ⚙️ Krishna (Backend)
 - [x] Generate **Settlement Impact CSV Report** (name, population, flood %, flag)
@@ -201,8 +201,8 @@
 | SAR gap fill | Bipasha | ✅ |
 | Accuracy gate (IoU, F1) | Krishna | ✅ |
 | Threshold retune feedback loop | Krishna | ✅ |
-| Settlement impact overlay | Bipasha | ⬜ |
-| Flood % per settlement | Bipasha | ⬜ |
+| Settlement impact overlay | Bipasha | ✅ |
+| Flood % per settlement | Bipasha | ✅ |
 | GeoTIFF / GeoJSON export | Krishna | ✅ |
 | Settlement CSV report | Krishna | ✅ |
 | Live dashboard backend | Krishna | ✅ |

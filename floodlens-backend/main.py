@@ -23,6 +23,7 @@ from app.routers import (
     accuracy,
     live,
     refine,
+    impact,
 )
 from app.routers.flood import execute_pipeline_sync
 from app.services.job_queue import job_queue
@@ -75,6 +76,10 @@ openapi_tags = [
     {
         "name": "Refinement",
         "description": "Terrain slope filtering, HAND elevation gate, SAR speckle cleaning, and optical-SAR gap filling pipeline.",
+    },
+    {
+        "name": "Settlement Impact",
+        "description": "Day 4 — Spatial intersection with OSM settlement polygons, flood percentage, severity flagging, and GeoJSON exports.",
     },
     {
         "name": "Settlements",
@@ -145,6 +150,8 @@ app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood
 app.include_router(flood.router,         prefix="/flood",           include_in_schema=False)
 app.include_router(refine.router,        prefix="/api/refine",      tags=["Refinement"])
 app.include_router(refine.router,        prefix="/refine",          include_in_schema=False)
+app.include_router(impact.router,        prefix="/api/impact",      tags=["Settlement Impact"])
+app.include_router(impact.router,        prefix="/impact",          include_in_schema=False)
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(live.router,          prefix="/api/live",         tags=["Live Dashboard"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
