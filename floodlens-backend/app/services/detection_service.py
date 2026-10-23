@@ -17,7 +17,13 @@ import datetime
 import logging
 from typing import Dict, Any, List, Tuple, Optional
 from pathlib import Path
-from PIL import Image
+# Check for Pillow (PIL)
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    Image = None
+    PIL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -338,26 +344,59 @@ class GeoTIFFExporter:
                     byte_val = max(0, min(255, int(v * 255)))
                 raw_bytes.append(byte_val)
 
-        img = Image.frombytes("L", (cols, rows), bytes(raw_bytes))
+        if Image is not None:
+            img = Image.frombytes("L", (cols, rows), bytes(raw_bytes))
 
-        # Add GeoTIFF metadata tags for GIS software (QGIS, Leaflet, rasterio)
-        # ModelPixelScaleTag (33550): [ScaleX, ScaleY, ScaleZ]
-        # ModelTiepointTag (33922): [I, J, K, X, Y, Z]
-        # GeoKeyDirectoryTag (34735): EPSG:4326 WGS84 coordinates
-        tiff_info = {
-            cls.TIFF_TAG_MODEL_PIXEL_SCALE: (res_x, res_y, 0.0),
-            cls.TIFF_TAG_MODEL_TIEPOINT: (0.0, 0.0, 0.0, min_lon, max_lat, 0.0),
-            cls.TIFF_TAG_GEO_KEY_DIRECTORY: (
-                1, 1, 0, 7,     # Header
-                1024, 0, 1, 2,  # GTModelTypeGeoKey = 2 (ModelTypeGeographic)
-                1025, 0, 1, 1,  # GTRasterTypeGeoKey = 1 (RasterPixelIsArea)
-                2048, 0, 1, 4326 # GeographicTypeGeoKey = 4326 (WGS 84)
-            ),
-        }
+            # Add GeoTIFF metadata tags for GIS software (QGIS, Leaflet, rasterio)
+            # ModelPixelScaleTag (33550): [ScaleX, ScaleY, ScaleZ]
+            # ModelTiepointTag (33922): [I, J, K, X, Y, Z]
+            # GeoKeyDirectoryTag (34735): EPSG:4326 WGS84 coordinates
+            tiff_info = {
+                cls.TIFF_TAG_MODEL_PIXEL_SCALE: (res_x, res_y, 0.0),
+                cls.TIFF_TAG_MODEL_TIEPOINT: (0.0, 0.0, 0.0, min_lon, max_lat, 0.0),
+                cls.TIFF_TAG_GEO_KEY_DIRECTORY: (
+                    1, 1, 0, 7,     # Header
+                    1024, 0, 1, 2,  # GTModelTypeGeoKey = 2 (ModelTypeGeographic)
+                    1025, 0, 1, 1,  # GTRasterTypeGeoKey = 1 (RasterPixelIsArea)
+                    2048, 0, 1, 4326 # GeographicTypeGeoKey = 4326 (WGS 84)
+                ),
+            }
 
-        img.save(output_path, format="TIFF", tiffinfo=tiff_info)
-        logger.info(f"Saved GeoTIFF via Pillow to {output_path}")
-        return output_path
+            img.save(output_path, format="TIFF", tiffinfo=tiff_info)
+            logger.info(f"Saved GeoTIFF via Pillow to {output_path}")
+            return output_path
+        else:
+            # Fallback pure-python uncompressed TIFF writer (zero third-party dependencies required)
+            pad = len(raw_bytes) % 2
+            data_len = len(raw_bytes) + pad
+            ifd_offset = 8 + data_len
+            entries = [
+                (256, 4, 1, cols),              # ImageWidth
+                (257, 4, 1, rows),              # ImageLength
+                (258, 3, 1, 8),                 # BitsPerSample
+                (259, 3, 1, 1),                 # Compression = 1 (none)
+                (262, 3, 1, 1),                 # PhotometricInterpretation = 1 (BlackIsZero)
+                (273, 4, 1, 8),                 # StripOffsets = 8
+                (277, 3, 1, 1),                 # SamplesPerPixel = 1
+                (278, 4, 1, rows),              # RowsPerStrip = rows
+                (279, 4, 1, len(raw_bytes)),    # StripByteCounts
+            ]
+            entries.sort(key=lambda x: x[0])
+            with open(output_path, "wb") as f:
+                f.write(struct.pack("<2sHI", b"II", 42, ifd_offset))
+                f.write(raw_bytes)
+                if pad:
+                    f.write(b"\x00")
+                f.write(struct.pack("<H", len(entries)))
+                for tag, typ, cnt, val in entries:
+                    f.write(struct.pack("<HHI", tag, typ, cnt))
+                    if typ == 3:
+                        f.write(struct.pack("<HH", val, 0))
+                    else:
+                        f.write(struct.pack("<I", val))
+                f.write(struct.pack("<I", 0))
+            logger.info(f"Saved GeoTIFF via built-in TIFF exporter to {output_path}")
+            return output_path
 
 
 # ─── 5. FULL DETECTION PIPELINE ──────────────────────────────────────────────

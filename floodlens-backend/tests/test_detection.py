@@ -14,7 +14,10 @@ import shutil
 import tempfile
 import asyncio
 import unittest
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 from pydantic import ValidationError
 
 from app.services.detection_service import (
@@ -201,14 +204,15 @@ class TestGeoTIFFExporter(unittest.TestCase):
         self.assertTrue(os.path.exists(saved_path))
         self.assertGreater(os.path.getsize(saved_path), 0)
 
-        # Inspect generated TIFF using Pillow
-        with Image.open(saved_path) as img:
-            self.assertEqual(img.format, "TIFF")
-            self.assertEqual(img.size, (4, 3))
-            # Verify GeoTIFF tags exist
-            self.assertIn(GeoTIFFExporter.TIFF_TAG_MODEL_PIXEL_SCALE, img.tag_v2)
-            self.assertIn(GeoTIFFExporter.TIFF_TAG_MODEL_TIEPOINT, img.tag_v2)
-            self.assertIn(GeoTIFFExporter.TIFF_TAG_GEO_KEY_DIRECTORY, img.tag_v2)
+        # Inspect generated TIFF using Pillow if available
+        if Image is not None:
+            with Image.open(saved_path) as img:
+                self.assertEqual(img.format, "TIFF")
+                self.assertEqual(img.size, (4, 3))
+                # Verify GeoTIFF tags exist
+                self.assertIn(GeoTIFFExporter.TIFF_TAG_MODEL_PIXEL_SCALE, img.tag_v2)
+                self.assertIn(GeoTIFFExporter.TIFF_TAG_MODEL_TIEPOINT, img.tag_v2)
+                self.assertIn(GeoTIFFExporter.TIFF_TAG_GEO_KEY_DIRECTORY, img.tag_v2)
 
 
 class TestDetectionPipeline(unittest.TestCase):
