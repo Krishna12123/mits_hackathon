@@ -31,6 +31,7 @@ from app.services.job_queue import job_queue
 # Ensure output directories exist
 os.makedirs("outputs/geotiff", exist_ok=True)
 os.makedirs("outputs/reports", exist_ok=True)
+os.makedirs("outputs/thumbnails", exist_ok=True)
 
 
 @asynccontextmanager
@@ -39,6 +40,11 @@ async def lifespan(app: FastAPI):
     print("🚀 FloodLens API starting up…")
     try:
         init_db()
+        try:
+            from app.services.flood_service import generate_default_thumbnails
+            generate_default_thumbnails()
+        except Exception:
+            pass
         print("✅ Database initialized successfully.")
     except Exception as e:
         print(f"⚠️ Database initialization warning: {e}")

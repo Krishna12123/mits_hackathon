@@ -313,8 +313,8 @@ function DetectionSettingsCard({ form, setField, fieldError }) {
 
 function ImageryPanel({ results }) {
   // PENDING: confirm thumbnail URL field names with backend team
-  const preUrl  = results?.pre_image_url  ?? results?.preImageUrl  ?? null
-  const postUrl = results?.post_image_url ?? results?.postImageUrl ?? null
+  const preUrl  = results?.pre_image_url  ?? results?.preImageUrl  ?? '/api/flood/thumbnails/pre_flood'
+  const postUrl = results?.post_image_url ?? results?.postImageUrl ?? '/api/flood/thumbnails/post_flood'
 
   return (
     <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5">
@@ -500,8 +500,8 @@ function RefinementSettingsCard({ form, setField }) {
 
 function MaskComparisonPanel({ results }) {
   // PENDING: confirm field names for refined / unrefined mask URLs with backend team
-  const unrefinedUrl = results?.unrefined_mask_url ?? results?.unrefinedMaskUrl ?? null
-  const refinedUrl   = results?.refined_mask_url   ?? results?.refinedMaskUrl   ?? null
+  const unrefinedUrl = results?.unrefined_mask_url ?? results?.unrefinedMaskUrl ?? '/api/flood/thumbnails/unrefined_mask'
+  const refinedUrl   = results?.refined_mask_url   ?? results?.refinedMaskUrl   ?? '/api/flood/thumbnails/refined_mask'
 
   return (
     <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5">

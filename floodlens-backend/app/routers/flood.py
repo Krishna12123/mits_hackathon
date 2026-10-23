@@ -13,6 +13,7 @@ import asyncio
 import datetime
 import logging
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db, SessionLocal
@@ -319,7 +320,34 @@ async def results(job_id: str, db: Session = Depends(get_db)):
         "geojson": geojson,
         "type": geojson.get("type", "FeatureCollection"),
         "features": geojson.get("features", []),
+        "pre_image_url": "/api/flood/thumbnails/pre_flood",
+        "preImageUrl": "/api/flood/thumbnails/pre_flood",
+        "post_image_url": "/api/flood/thumbnails/post_flood",
+        "postImageUrl": "/api/flood/thumbnails/post_flood",
+        "unrefined_mask_url": "/api/flood/thumbnails/unrefined_mask",
+        "unrefinedMaskUrl": "/api/flood/thumbnails/unrefined_mask",
+        "refined_mask_url": "/api/flood/thumbnails/refined_mask",
+        "refinedMaskUrl": "/api/flood/thumbnails/refined_mask",
     }
+
+
+
+@router.get("/thumbnails/{thumb_type}")
+async def get_thumbnail(thumb_type: str):
+    """Serves PNG satellite and mask comparison thumbnails."""
+    file_map = {
+        "pre_flood": "outputs/thumbnails/pre_flood.png",
+        "post_flood": "outputs/thumbnails/post_flood.png",
+        "unrefined_mask": "outputs/thumbnails/unrefined_mask.png",
+        "refined_mask": "outputs/thumbnails/refined_mask.png",
+    }
+    path = file_map.get(thumb_type)
+    if not path or not os.path.exists(path):
+        from app.services.flood_service import generate_default_thumbnails
+        generate_default_thumbnails()
+    if path and os.path.exists(path):
+        return FileResponse(path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Thumbnail not found")
 
 
 @router.get("/summary", response_model=FloodSummaryResponse)
