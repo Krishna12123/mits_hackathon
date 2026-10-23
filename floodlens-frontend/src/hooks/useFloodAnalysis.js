@@ -20,6 +20,7 @@ import {
   classifyError,
   errorMessage,
 } from '../services/floodAnalysis'
+import { accuracyAPI } from '../services/api'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -42,13 +43,15 @@ function mapBackendStatus(backendStatus) {
   switch (backendStatus) {
     case 'queued':
     case 'fetching':
-      return 'fetching'       // PENDING: confirm 'fetching' value
+      return 'fetching'
+    case 'running':           // backend sets status="running" while job executes
+      return 'processing'
     case 'processing':
-      return 'processing'     // PENDING: confirm 'processing' value
+      return 'processing'
     case 'detecting':
-      return 'detecting'      // PENDING: confirm 'detecting' value
+      return 'detecting'
     case 'calculating':
-      return 'calculating'    // PENDING: confirm 'calculating' value
+      return 'calculating'
     case 'completed':
       return 'completed'
     case 'failed':
@@ -81,6 +84,9 @@ export function useFloodAnalysis() {
 
   /** Ref to guard against state updates after the hook unmounts */
   const mountedRef = useRef(true)
+
+  /** Stores the last successful detection job ID — used by retune() */
+  const lastJobIdRef = useRef(null)
 
   // Track mounted state
   // (No useEffect here intentionally — caller should call reset() on unmount
@@ -118,11 +124,13 @@ export function useFloodAnalysis() {
     // ── 1. Submit job ───────────────────────────────────────────────────────
     try {
       const submitResponse = await submitAnalysis(params)
-      // PENDING: confirm the field name for the job id in the submit response
-      jobId = submitResponse?.jobId ?? submitResponse?.job_id ?? submitResponse?.id
+      // job_id is the confirmed field name in DetectResponse (schemas.py)
+      jobId = submitResponse?.job_id ?? submitResponse?.jobId ?? submitResponse?.id
       if (!jobId) {
-        throw new Error('Backend did not return a job ID. PENDING: confirm response schema.')
+        throw new Error('Backend did not return a job ID.')
       }
+      // Persist for retune() to use
+      lastJobIdRef.current = jobId
     } catch (err) {
       const cls = classifyError(err)
       setError(errorMessage(cls))
@@ -160,9 +168,8 @@ export function useFloodAnalysis() {
           }
         } else if (uiStage === 'failed') {
           stopPolling()
-          // PENDING: confirm error field name in status response
-          const backendError =
-            statusResponse?.error ?? statusResponse?.message ?? null
+          // error_message is the confirmed field name in JobStatusResponse (schemas.py)
+          const backendError = statusResponse?.error_message ?? null
           setError(
             backendError
               ? `Analysis failed: ${backendError}`
@@ -179,56 +186,42 @@ export function useFloodAnalysis() {
   }, [stopPolling])
 
   /**
-   * Retune — re-runs the full analysis with updated refinement parameters.
-   * Uses the same pipeline as run(); the 'retuning' UI stage is set before
-   * submitting so AnalysisProgress can show the feedback-loop animation.
+   * Retune — calls POST /api/accuracy/evaluate with the last detection job ID.
+   * The accuracy endpoint is synchronous (no polling needed).
+   * Shows the feedback-loop 'retuning' animation while the request is in-flight.
    *
-   * PENDING: If the backend exposes a dedicated refinement endpoint, point
-   * submitAnalysis (or a new submitRefinement) at it instead of /flood/detect.
-   *
-   * @param {Object} params - Same shape as run(), includes refinement fields
+   * @param {Object} params - Form params; accuracyThreshold maps to target_iou
    */
   const retune = useCallback(async (params) => {
+    const jobId = lastJobIdRef.current
+    if (!jobId) {
+      setError('No completed detection job found. Run detection first before retuning.')
+      return
+    }
+
     stopPolling()
     setResults(null)
     setError(null)
     setStatus('retuning') // triggers feedback-loop animation in AnalysisProgress
 
-    let jobId
-
     try {
-      // PENDING: replace with a dedicated refinement endpoint when available
-      const submitResponse = await submitAnalysis(params)
-      jobId = submitResponse?.jobId ?? submitResponse?.job_id ?? submitResponse?.id
-      if (!jobId) throw new Error('Backend did not return a job ID.')
+      // POST /accuracy/evaluate — confirmed endpoint (routers/accuracy.py)
+      const response = await accuracyAPI.evaluate({
+        job_id:         jobId,
+        target_iou:     params.accuracyThreshold ?? 0.7,
+        aoi_lat:        26.3,
+        aoi_lon:        85.8,
+        aoi_radius_km:  150,
+        max_iterations: 5,
+      })
+      // AccuracyResponse: { job_id, passed_gate, current_iou, current_f1, iterations_count, history[] }
+      setResults(response)
+      setStatus('completed')
     } catch (err) {
       const cls = classifyError(err)
       setError(errorMessage(cls))
       setStatus('failed')
-      return
     }
-
-    pollRef.current = setInterval(async () => {
-      if (!mountedRef.current) { stopPolling(); return }
-      try {
-        const statusResponse = await pollJobStatus(jobId)
-        const backendStatus = statusResponse?.status ?? statusResponse?.state ?? 'retuning'
-        const uiStage = mapBackendStatus(backendStatus)
-        setStatus(uiStage === 'fetching' ? 'retuning' : uiStage) // keep retuning label during polling
-        if (uiStage === 'completed') {
-          stopPolling()
-          try { setResults(await fetchResults(jobId)) }
-          catch (e) { setError(errorMessage(classifyError(e))); setStatus('failed') }
-        } else if (uiStage === 'failed') {
-          stopPolling()
-          setError(statusResponse?.error ?? 'Retuning failed on the server. Please try again.')
-        }
-      } catch (pollErr) {
-        stopPolling()
-        setError(errorMessage(classifyError(pollErr)))
-        setStatus('failed')
-      }
-    }, POLL_INTERVAL_MS)
   }, [stopPolling])
 
   return { status, results, error, run, retune, reset }

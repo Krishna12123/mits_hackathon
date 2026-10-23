@@ -42,7 +42,6 @@ const SATELLITES = [
     detail: 'Optical · 30 m · NDWI · Long archive coverage',
   },
 ]
-
 // Active pipeline stages (used to derive isRunning)
 const RUNNING_STAGES = ['fetching', 'processing', 'detecting', 'calculating', 'retuning']
 
@@ -488,10 +487,9 @@ function RefinementSettingsCard({ form, setField }) {
           <span className="text-[10px] text-[#dae2fd]/28">0.00 · include all</span>
           <span className="text-[10px] text-[#dae2fd]/28">1.00 · highest confidence only</span>
         </div>
-        <p className="text-[10px] text-[#dae2fd]/25 mt-1.5 flex items-center gap-1">
+        <p className="text-[10px] text-[#dae2fd]/35 mt-1.5 flex items-center gap-1">
           <Info className="w-3 h-3 shrink-0" />
-          {/* PENDING: confirm accuracy_threshold field name and valid range with backend team */}
-          Pixels below this confidence score are excluded from the output mask.
+          Configurable target/evaluation threshold for the accuracy gate, not a measured model accuracy score.
         </p>
       </div>
     </SectionCard>
@@ -589,7 +587,7 @@ export default function Configure() {
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
 
-    // PENDING: confirm all field names with backend team (see floodAnalysis.js)
+    // Field mapping is handled inside submitAnalysis() in floodAnalysis.js
     run({
       region:          form.region,
       district:        form.district || null,

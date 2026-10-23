@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 
 const severityConfig = {
+  safe:   { label: 'Safe',   className: 'badge-low'    },
   low:    { label: 'Low',    className: 'badge-low'    },
   medium: { label: 'Medium', className: 'badge-medium' },
   high:   { label: 'High',   className: 'badge-high'   },
@@ -12,6 +13,7 @@ export default function SeverityBadge({ level }) {
   return (
     <span className={config.className}>
       <span className={clsx('w-1.5 h-1.5 rounded-full', {
+        'bg-cyan-400':   level === 'safe',
         'bg-green-400':  level === 'low',
         'bg-yellow-400': level === 'medium',
         'bg-red-400':    level === 'high',
