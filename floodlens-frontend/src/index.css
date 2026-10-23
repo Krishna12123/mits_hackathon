@@ -49,3 +49,72 @@
 .leaflet-tile {
   filter: brightness(0.7) saturate(0.8) hue-rotate(200deg);
 }
+
+/* ── Print Media Optimization (Day 4 — Step 5) ────────────────────────── */
+@media print {
+  /* Hide all navigation, sidebars, headers, action bars, and interactive buttons */
+  aside,
+  header,
+  nav,
+  .no-print,
+  button,
+  .btn-primary,
+  .btn-secondary {
+    display: none !important;
+  }
+
+  /* Reset layout constraints so all pages print without clipping */
+  html,
+  body,
+  #root,
+  .flex,
+  main {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Print typography and contrast */
+  body {
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent sections, summary cards, and table rows from splitting mid-element */
+  .avoid-break,
+  tr,
+  .card,
+  table {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Clean borders and readable table rows for paper printing */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: auto;
+  }
+}

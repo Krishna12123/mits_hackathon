@@ -40,6 +40,17 @@ export const floodAPI = {
   summary: () => api.get('/flood/summary'),
 }
 
+// ── Accuracy Gate ─────────────────────────────────────────────
+export const accuracyAPI = {
+  /**
+   * Evaluate accuracy and optionally retune.
+   * POST /accuracy/evaluate
+   * Body: { job_id, target_iou, aoi_lat, aoi_lon, aoi_radius_km, max_iterations }
+   * Response: AccuracyResponse { job_id, passed_gate, current_iou, current_f1, iterations_count, history[] }
+   */
+  evaluate: (params) => api.post('/accuracy/evaluate', params),
+}
+
 // ── Settlements ──────────────────────────────────────────────
 export const settlementAPI = {
   /** Get all affected settlements */

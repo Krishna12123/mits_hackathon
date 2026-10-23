@@ -53,11 +53,11 @@
 > **Goal:** Water index computation + thresholding + change detection working
 
 ### ⚙️ Bipasha (Backend)
-- [ ] Implement **NDWI** computation (Sentinel-2 bands)
-- [ ] Implement **MNDWI** computation
-- [ ] Implement **AWEI** computation
-- [ ] Implement **SAR VV/VH** band processing (Sentinel-1)
-- [ ] Otsu thresholding per scene for each index
+- [x] Implement **NDWI** computation (Sentinel-2 bands)
+- [x] Implement **MNDWI** computation
+- [x] Implement **AWEI** computation
+- [x] Implement **SAR VV/VH** band processing (Sentinel-1)
+- [x] Otsu thresholding per scene for each index
 
 ### ⚙️ Krishna (Backend)
 - [x] Implement **majority vote** ensemble (combine all 4 index results)
@@ -185,20 +185,20 @@
 
 | Feature | Owner | Status |
 |---------|-------|--------|
-| Sentinel-2 ingestion | Bipasha | ⬜ |
+| Sentinel-2 ingestion | Bipasha | ✅ |
 | Sentinel-1 SAR ingestion | Krishna | ✅ |
 | DEM / JRC / OSM static layers | Krishna | ✅ |
-| Cloud masking & preprocessing | Bipasha | ⬜ |
-| NDWI computation | Bipasha | ⬜ |
-| MNDWI computation | Bipasha | ⬜ |
-| AWEI computation | Bipasha | ⬜ |
-| SAR VV/VH processing | Bipasha | ⬜ |
-| Otsu thresholding | Bipasha | ⬜ |
+| Cloud masking & preprocessing | Bipasha | ✅ |
+| NDWI computation | Bipasha | ✅ |
+| MNDWI computation | Bipasha | ✅ |
+| AWEI computation | Bipasha | ✅ |
+| SAR VV/VH processing | Bipasha | ✅ |
+| Otsu thresholding | Bipasha | ✅ |
 | Majority vote ensemble | Krishna | ✅ |
 | Change detection (post - JRC) | Krishna | ✅ |
-| HAND + slope refinement | Bipasha | ⬜ |
-| Speckle cleaning | Bipasha | ⬜ |
-| SAR gap fill | Bipasha | ⬜ |
+| HAND + slope refinement | Bipasha | ✅ |
+| Speckle cleaning | Bipasha | ✅ |
+| SAR gap fill | Bipasha | ✅ |
 | Accuracy gate (IoU, F1) | Krishna | ✅ |
 | Threshold retune feedback loop | Krishna | ✅ |
 | Settlement impact overlay | Bipasha | ⬜ |

@@ -21,36 +21,44 @@ import { floodAPI } from './api'
  * Submit a flood analysis job.
  *
  * @param {Object} params
- * @param {string} params.region          - Selected region (e.g. "Nepal Terai")
- * @param {string} [params.district]      - Optional district within the region
- * @param {string} params.preFloodStart   - ISO date string — PENDING: confirm field name
- * @param {string} params.preFloodEnd     - ISO date string — PENDING: confirm field name
- * @param {string} params.postFloodStart  - ISO date string — PENDING: confirm field name
- * @param {string} params.postFloodEnd    - ISO date string — PENDING: confirm field name
- * @param {string} params.satelliteSource - e.g. "sentinel-2" — PENDING: confirm enum values
+ * @param {string} params.satelliteSource - e.g. "sentinel-1-sar" (mapped to backend enum)
+ * @param {string[]} params.indices       - e.g. ["ndwi"] or ["ndwi","mndwi"] (mapped to single uppercase string)
+ * @param {string} params.preFloodEnd     - ISO date string → sent as pre_date
+ * @param {string} params.postFloodEnd    - ISO date string → sent as post_date
  *
  * @returns {Promise<{ jobId: string }>}
- *   PENDING: confirm actual response shape from backend team.
  */
 export async function submitAnalysis(params) {
-  // PENDING: confirm endpoint path and request body schema with backend team
-  const payload = {
-    region: params.region,
-    district: params.district ?? null,
-    pre_flood_start: params.preFloodStart,    // PENDING: confirm field name
-    pre_flood_end: params.preFloodEnd,          // PENDING: confirm field name
-    post_flood_start: params.postFloodStart,   // PENDING: confirm field name
-    post_flood_end: params.postFloodEnd,        // PENDING: confirm field name
-    satellite_source: params.satelliteSource,  // PENDING: confirm enum values
-    indices: params.indices ?? [],             // PENDING: confirm field name and accepted values
-    threshold: params.threshold ?? 0.3,        // PENDING: confirm field name and valid range
-    // ── Refinement parameters (Day 3) — PENDING: confirm all field names with backend team ──
-    use_hand: params.useHand ?? false,          // PENDING: confirm field name
-    slope_threshold: params.slopeThreshold ?? 10, // PENDING: confirm field name and unit (degrees)
-    speckle_filter: params.speckleFilter ?? false, // PENDING: confirm field name
-    accuracy_threshold: params.accuracyThreshold ?? 0.7, // PENDING: confirm field name and range
+  // Map frontend satellite values to backend enum: "Sentinel-1", "Sentinel-2", "Landsat"
+  const SATELLITE_MAP = {
+    'sentinel-2':     'Sentinel-2',
+    'sentinel-1-sar': 'Sentinel-1',
+    'landsat':        'Landsat',
   }
-  // floodAPI.detect → POST /flood/detect — PENDING: confirm with backend team
+
+  // Map indices array to single uppercase string; multiple selections → "ALL"
+  const indicesArray = params.indices ?? []
+  const index =
+    indicesArray.length > 1
+      ? 'ALL'
+      : indicesArray.length === 1
+        ? indicesArray[0].toUpperCase()  // e.g. "ndwi" → "NDWI"
+        : 'NDWI'                         // safe fallback
+
+  const payload = {
+    // Confirmed backend fields (DetectRequest schema)
+    satellite:      SATELLITE_MAP[params.satelliteSource] ?? 'Sentinel-1',
+    index,
+    pre_date:       params.preFloodEnd,    // backend accepts single snapshot date
+    post_date:      params.postFloodEnd,   // backend accepts single snapshot date
+    threshold:      params.threshold ?? 0.3,
+    // AOI defaults — Nepal Terai centre (backend default values)
+    aoi_lat:        26.3,
+    aoi_lon:        85.8,
+    aoi_radius_km:  150,
+    // NOTE: use_hand, slope_threshold, speckle_filter are not in the backend
+    // DetectRequest schema — omitted until backend supports them.
+  }
   return floodAPI.detect(payload)
 }
 
@@ -59,12 +67,10 @@ export async function submitAnalysis(params) {
  *
  * @param {string} jobId - Job identifier returned by submitAnalysis
  * @returns {Promise<{
- *   jobId: string,
- *   status: 'queued' | 'fetching' | 'processing' | 'detecting' | 'calculating' | 'completed' | 'failed',
- *   stage?: string,
- *   error?: string
+ *   job_id: string,
+ *   status: 'running' | 'completed' | 'failed',
+ *   error_message?: string
  * }>}
- * PENDING: confirm status enum values and response shape with backend team.
  */
 export async function pollJobStatus(jobId) {
   // floodAPI.status → GET /flood/status/{jobId} — PENDING: confirm with backend team

@@ -12,11 +12,12 @@ import NotFound  from './pages/NotFound'
 import Layout    from './components/layout/Layout'
 
 // Dashboard pages
-import Dashboard   from './pages/Dashboard'
-import FloodMap    from './pages/FloodMap'
-import Settlements from './pages/Settlements'
-import Reports     from './pages/Reports'
-import Configure   from './pages/Configure'
+import Dashboard        from './pages/Dashboard'
+import FloodMap         from './pages/FloodMap'
+import Settlements      from './pages/Settlements'
+import SettlementReport from './pages/SettlementReport'
+import Reports          from './pages/Reports'
+import Configure        from './pages/Configure'
 
 export default function App() {
   return (
@@ -41,15 +42,19 @@ export default function App() {
 
         {/* /about → About page */}
         <Route path="about" element={<About />} />
+
+        {/* /settlement-report → Direct printable settlement impact report */}
+        <Route path="settlement-report" element={<SettlementReport />} />
       </Route>
 
       {/* ── Internal dashboard — sidebar + topbar layout ─────────────── */}
       <Route path="dashboard" element={<Layout />}>
-        <Route index                   element={<Dashboard />}   />
-        <Route path="map"              element={<FloodMap />}     />
-        <Route path="settlements"      element={<Settlements />}  />
-        <Route path="reports"          element={<Reports />}      />
-        <Route path="configure"        element={<Configure />}    />
+        <Route index                      element={<Dashboard />}        />
+        <Route path="map"                 element={<FloodMap />}          />
+        <Route path="settlements"         element={<Settlements />}       />
+        <Route path="settlements/report"  element={<SettlementReport />}  />
+        <Route path="reports"             element={<Reports />}           />
+        <Route path="configure"           element={<Configure />}         />
       </Route>
 
       {/* ── 404 — catch all unknown routes ───────────────────────────── */}

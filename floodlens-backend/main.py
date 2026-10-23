@@ -22,6 +22,7 @@ from app.routers import (
     ws,
     accuracy,
     live,
+    refine,
 )
 from app.routers.flood import execute_pipeline_sync
 from app.services.job_queue import job_queue
@@ -40,6 +41,14 @@ async def lifespan(app: FastAPI):
         print("✅ Database initialized successfully.")
     except Exception as e:
         print(f"⚠️ Database initialization warning: {e}")
+
+    # Google Earth Engine initialization
+    try:
+        import ee
+        ee.Initialize(project="floodlens-512416")
+        print("✅ Google Earth Engine initialized successfully (project: floodlens-512416).")
+    except Exception as e:
+        print(f"⚠️ Earth Engine initialization note: {e}")
 
     try:
         await job_queue.start()
@@ -61,7 +70,11 @@ async def lifespan(app: FastAPI):
 openapi_tags = [
     {
         "name": "Flood Detection",
-        "description": "Multi-index (NDWI, MNDWI, AWEI, SAR VV/VH) ensemble change detection pipeline & background job processing.",
+        "description": "Multi-index (NDWI, MNDWI, AWEI, SAR VV/VH) ensemble change detection pipeline & Google Earth Engine Sentinel-2 analysis.",
+    },
+    {
+        "name": "Refinement",
+        "description": "Terrain slope filtering, HAND elevation gate, SAR speckle cleaning, and optical-SAR gap filling pipeline.",
     },
     {
         "name": "Settlements",
@@ -104,6 +117,7 @@ FloodLens is an end-to-end Earth Observation analytics backend providing:
 - **Indices & Automated Thresholding**: NDWI, MNDWI, AWEI, SAR VV/VH, and per-scene Otsu thresholding.
 - **Ensemble & Change Detection**: 4-index majority vote ensemble minus JRC global permanent water baseline.
 - **Accuracy Gate & Feedback Loop**: Dynamic IoU / F1 score gate with automated threshold retuning.
+- **Refinement Pipeline**: Terrain slope filter, HAND elevation gate, SAR speckle reduction, and optical cloud gap filling.
 - **Settlement Impact**: Intersect flood extent with OSM settlements (name, population, flood %, severity flag).
 - **Asynchronous Background Processing**: In-process FIFO job queue with multi-stage progress tracking and Celery support.
 - **Outputs & Telemetry**: Settlement Impact CSV reports, GeoTIFF exports, GeoJSON vectors, and WebSocket telemetry stream.
@@ -128,12 +142,20 @@ app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 # Routers
 app.include_router(auth.router,          prefix="/api/auth",        tags=["Auth"])
 app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood Detection"])
+app.include_router(flood.router,         prefix="/flood",           include_in_schema=False)
+app.include_router(refine.router,        prefix="/api/refine",      tags=["Refinement"])
+app.include_router(refine.router,        prefix="/refine",          include_in_schema=False)
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(live.router,          prefix="/api/live",         tags=["Live Dashboard"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
 app.include_router(config_router.router, prefix="/api/config",       tags=["Config"])
 app.include_router(accuracy.router,      prefix="/api/accuracy",    tags=["Accuracy Gate"])
 app.include_router(ws.router,                                        tags=["Real-Time Stream"])
+
+
+@app.get("/", tags=["Config"])
+def home():
+    return {"message": "FloodLens API is running!"}
 
 
 @app.post("/api/detect", response_model=DetectResultResponse, tags=["Flood Detection"])
