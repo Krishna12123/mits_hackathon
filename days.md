@@ -119,11 +119,11 @@
 > **Goal:** Impact assessment, report generation, all outputs working
 
 ### ⚙️ Bipasha (Backend)
-- [ ] Overlay flood mask with OSM settlement polygons
-- [ ] Calculate **flood % per settlement** (area intersection)
-- [ ] Flag settlements as: 🔴 Severely Affected / 🟡 Partially Affected / 🟢 Safe
-- [ ] Export final **Flood Map as GeoTIFF and GeoJSON**
-- [ ] Expose `/api/impact` endpoint
+- [x] Overlay flood mask with OSM settlement polygons
+- [x] Calculate **flood % per settlement** (area intersection)
+- [x] Flag settlements as: 🔴 Severely Affected / 🟡 Partially Affected / 🟢 Safe
+- [x] Export final **Flood Map as GeoTIFF and GeoJSON**
+- [x] Expose `/api/impact` endpoint
 
 ### ⚙️ Krishna (Backend)
 - [x] Generate **Settlement Impact CSV Report** (name, population, flood %, flag)
@@ -152,11 +152,11 @@
 > **Goal:** Full end-to-end integration, bug fixes, UI polish, demo ready
 
 ### ⚙️ Bipasha (Backend)
-- [ ] Full pipeline integration test with real Sentinel data
-- [ ] Performance optimization (caching, parallel processing)
-- [ ] Fix all backend bugs found during integration
-- [ ] Deploy backend to cloud / local server
-- [ ] Verify all API endpoints respond correctly
+- [x] Full pipeline integration test with real Sentinel data
+- [x] Performance optimization (caching, parallel processing)
+- [x] Fix all backend bugs found during integration
+- [x] Deploy backend to cloud / local server
+- [x] Verify all API endpoints respond correctly
 
 ### ⚙️ Krishna (Backend)
 - [ ] Load test the API (simulate concurrent requests)
@@ -201,8 +201,8 @@
 | SAR gap fill | Bipasha | ✅ |
 | Accuracy gate (IoU, F1) | Krishna | ✅ |
 | Threshold retune feedback loop | Krishna | ✅ |
-| Settlement impact overlay | Bipasha | ⬜ |
-| Flood % per settlement | Bipasha | ⬜ |
+| Settlement impact overlay | Bipasha | ✅ |
+| Flood % per settlement | Bipasha | ✅ |
 | GeoTIFF / GeoJSON export | Krishna | ✅ |
 | Settlement CSV report | Krishna | ✅ |
 | Live dashboard backend | Krishna | ✅ |

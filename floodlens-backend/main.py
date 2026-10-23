@@ -32,6 +32,7 @@ from app.routers import (
     accuracy,
     live,
     refine,
+    impact,
 )
 from app.routers.flood import execute_pipeline_sync
 from app.services.job_queue import job_queue
@@ -42,6 +43,7 @@ logger = setup_logging()
 # Ensure output directories exist
 os.makedirs("outputs/geotiff", exist_ok=True)
 os.makedirs("outputs/reports", exist_ok=True)
+os.makedirs("outputs/thumbnails", exist_ok=True)
 
 
 @asynccontextmanager
@@ -50,7 +52,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 FloodLens API starting up…")
     try:
         init_db()
-        logger.info("✅ Database initialized and demo dataset verified.")
+        print("✅ Database initialized successfully.")
     except Exception as e:
         logger.warning(f"⚠️ Database initialization note: {e}")
 
@@ -87,6 +89,10 @@ openapi_tags = [
     {
         "name": "Refinement",
         "description": "Terrain slope filtering, HAND elevation gate, SAR speckle cleaning, and optical-SAR gap filling pipeline.",
+    },
+    {
+        "name": "Settlement Impact",
+        "description": "Day 4 — Spatial intersection with OSM settlement polygons, flood percentage, severity flagging, and GeoJSON exports.",
     },
     {
         "name": "Settlements",
@@ -276,6 +282,7 @@ app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 app.include_router(auth.router,          prefix="/api/auth",        tags=["Auth"])
 app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood Detection"])
 app.include_router(refine.router,        prefix="/api/refine",      tags=["Refinement"])
+app.include_router(refine.router,        prefix="/refine",          include_in_schema=False)
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(live.router,          prefix="/api/live",         tags=["Live Dashboard"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
