@@ -1,6 +1,8 @@
 """
 Flood Detection Router
 POST /api/flood/detect          — Queue a flood detection job
+POST /api/flood/analyze         — Direct Earth Engine S2 flood analysis
+GET  /api/flood/                — Earth Engine service health check
 GET  /api/flood/status/{job_id} — Check job status
 GET  /api/flood/results/{job_id} — Get result GeoJSON
 GET  /api/flood/summary         — Current aggregate flood summary
@@ -24,13 +26,62 @@ from app.models.schemas import (
     FloodSummaryResponse,
     DetectResultResponse,
 )
+from app.models.flood import (
+    FloodAnalysisRequest,
+    FloodStatusResponse,
+)
 from app.routers.ws import manager
 from app.services.detection_service import detection_pipeline
 from app.services.job_queue import job_queue
+from app.services.flood_service import (
+    detect_flood,
+    get_flood_status,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/")
+def test_flood():
+    """Returns Earth Engine flood detection service status."""
+    return get_flood_status()
+
+
+@router.post(
+    "/analyze",
+    response_model=FloodStatusResponse,
+)
+def analyze_flood(request: FloodAnalysisRequest):
+    """
+    Sentinel-2 surface reflectance flood analysis using Google Earth Engine.
+    Computes NDWI/MNDWI change detection over bounding box and pre/post date windows.
+    """
+    try:
+        import ee
+
+        west, south, east, north = request.bbox
+
+        aoi = ee.Geometry.Rectangle(
+            [west, south, east, north]
+        )
+
+        result = detect_flood(
+            aoi=aoi,
+            pre_start=request.pre_start.isoformat(),
+            pre_end=request.pre_end.isoformat(),
+            post_start=request.post_start.isoformat(),
+            post_end=request.post_end.isoformat(),
+        )
+
+        return result
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Flood analysis failed: {str(exc)}",
+        ) from exc
 
 
 def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:

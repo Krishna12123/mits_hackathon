@@ -19,6 +19,10 @@ from app.models.schemas import (
     ReportItem,
     ReportListResponse,
 )
+from app.models.flood import (
+    FloodAnalysisRequest,
+    FloodStatusResponse,
+)
 
 __all__ = [
     "Base",
@@ -39,4 +43,6 @@ __all__ = [
     "SettlementListResponse",
     "ReportItem",
     "ReportListResponse",
+    "FloodAnalysisRequest",
+    "FloodStatusResponse",
 ]
