@@ -41,6 +41,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️ Database initialization warning: {e}")
 
+    # Google Earth Engine initialization
+    try:
+        import ee
+        ee.Initialize(project="floodlens-512416")
+        print("✅ Google Earth Engine initialized successfully (project: floodlens-512416).")
+    except Exception as e:
+        print(f"⚠️ Earth Engine initialization note: {e}")
+
     try:
         await job_queue.start()
         print("✅ Background job queue worker pool started.")
@@ -61,7 +69,7 @@ async def lifespan(app: FastAPI):
 openapi_tags = [
     {
         "name": "Flood Detection",
-        "description": "Multi-index (NDWI, MNDWI, AWEI, SAR VV/VH) ensemble change detection pipeline & background job processing.",
+        "description": "Multi-index (NDWI, MNDWI, AWEI, SAR VV/VH) ensemble change detection pipeline & Google Earth Engine Sentinel-2 analysis.",
     },
     {
         "name": "Settlements",
@@ -128,12 +136,18 @@ app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 # Routers
 app.include_router(auth.router,          prefix="/api/auth",        tags=["Auth"])
 app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood Detection"])
+app.include_router(flood.router,         prefix="/flood",           include_in_schema=False)
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(live.router,          prefix="/api/live",         tags=["Live Dashboard"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
 app.include_router(config_router.router, prefix="/api/config",       tags=["Config"])
 app.include_router(accuracy.router,      prefix="/api/accuracy",    tags=["Accuracy Gate"])
 app.include_router(ws.router,                                        tags=["Real-Time Stream"])
+
+
+@app.get("/", tags=["Config"])
+def home():
+    return {"message": "FloodLens API is running!"}
 
 
 @app.post("/api/detect", response_model=DetectResultResponse, tags=["Flood Detection"])

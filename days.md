@@ -53,8 +53,8 @@
 > **Goal:** Water index computation + thresholding + change detection working
 
 ### ⚙️ Bipasha (Backend)
-- [ ] Implement **NDWI** computation (Sentinel-2 bands)
-- [ ] Implement **MNDWI** computation
+- [x] Implement **NDWI** computation (Sentinel-2 bands)
+- [x] Implement **MNDWI** computation
 - [ ] Implement **AWEI** computation
 - [ ] Implement **SAR VV/VH** band processing (Sentinel-1)
 - [ ] Otsu thresholding per scene for each index
@@ -185,12 +185,12 @@
 
 | Feature | Owner | Status |
 |---------|-------|--------|
-| Sentinel-2 ingestion | Bipasha | ⬜ |
+| Sentinel-2 ingestion | Bipasha | ✅ |
 | Sentinel-1 SAR ingestion | Krishna | ✅ |
 | DEM / JRC / OSM static layers | Krishna | ✅ |
-| Cloud masking & preprocessing | Bipasha | ⬜ |
-| NDWI computation | Bipasha | ⬜ |
-| MNDWI computation | Bipasha | ⬜ |
+| Cloud masking & preprocessing | Bipasha | ✅ |
+| NDWI computation | Bipasha | ✅ |
+| MNDWI computation | Bipasha | ✅ |
 | AWEI computation | Bipasha | ⬜ |
 | SAR VV/VH processing | Bipasha | ⬜ |
 | Otsu thresholding | Bipasha | ⬜ |
