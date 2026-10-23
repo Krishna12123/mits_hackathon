@@ -23,9 +23,12 @@ class Job(Base):
 
     # Outputs
     flood_extent_km2 = Column(Float, nullable=True)
+    permanent_water_km2 = Column(Float, nullable=True)
+    total_water_km2 = Column(Float, nullable=True)
     affected_districts = Column(Float, nullable=True)
     at_risk_population = Column(Float, nullable=True)
     ndwi_score = Column(Float, nullable=True)
+    min_votes = Column(Integer, default=2)
     result_geojson = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
 

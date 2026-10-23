@@ -1,6 +1,9 @@
 import math
 from typing import Dict, List, Optional, Any
-import ee
+try:
+    import ee
+except ImportError:
+    ee = None
 
 
 CLOUD_LIMIT_PERCENT = 80

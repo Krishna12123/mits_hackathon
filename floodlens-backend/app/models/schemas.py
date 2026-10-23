@@ -3,6 +3,15 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional, List, Any, Dict
 
 
+# --- Generic & Error Schemas ---
+class ErrorResponse(BaseModel):
+    error: str
+    detail: str
+    status_code: int = 400
+    request_id: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
 # --- Auth Schemas ---
 class LoginRequest(BaseModel):
     username: str
@@ -45,9 +54,10 @@ class DetectRequest(BaseModel):
             return values
         data = values.copy()
 
-        # Satellite source mapping
-        if "satellite_source" in data and not data.get("satellite"):
-            src = str(data["satellite_source"]).lower()
+        # Satellite source mapping (supports camelCase and snake_case)
+        sat_input = data.get("satellite_source") or data.get("satelliteSource")
+        if sat_input and not data.get("satellite"):
+            src = str(sat_input).lower()
             if "sar" in src or "sentinel-1" in src:
                 data["satellite"] = "Sentinel-1"
             elif "landsat" in src:
@@ -55,16 +65,48 @@ class DetectRequest(BaseModel):
             else:
                 data["satellite"] = "Sentinel-2"
 
-        # Date mappings
-        if "pre_flood_start" in data and data["pre_flood_start"]:
-            data["pre_date"] = str(data["pre_flood_start"])[:10]
-        elif "pre_flood_end" in data and data["pre_flood_end"]:
-            data["pre_date"] = str(data["pre_flood_end"])[:10]
+        # Date mappings (supports camelCase and snake_case)
+        pre_val = (
+            data.get("pre_flood_start")
+            or data.get("preFloodStart")
+            or data.get("pre_flood_end")
+            or data.get("preFloodEnd")
+            or data.get("pre_date")
+            or data.get("preDate")
+        )
+        if pre_val:
+            data["pre_date"] = str(pre_val)[:10]
 
-        if "post_flood_end" in data and data["post_flood_end"]:
-            data["post_date"] = str(data["post_flood_end"])[:10]
-        elif "post_flood_start" in data and data["post_flood_start"]:
-            data["post_date"] = str(data["post_flood_start"])[:10]
+        post_val = (
+            data.get("post_flood_end")
+            or data.get("postFloodEnd")
+            or data.get("post_flood_start")
+            or data.get("postFloodStart")
+            or data.get("post_date")
+            or data.get("postDate")
+        )
+        if post_val:
+            data["post_date"] = str(post_val)[:10]
+
+        # Numeric and coordinate aliases
+        if "cloudPct" in data and "cloud_pct" not in data:
+            data["cloud_pct"] = data["cloudPct"]
+        if "aoiLat" in data and "aoi_lat" not in data:
+            data["aoi_lat"] = data["aoiLat"]
+        elif "lat" in data and "aoi_lat" not in data:
+            data["aoi_lat"] = data["lat"]
+        if "aoiLon" in data and "aoi_lon" not in data:
+            data["aoi_lon"] = data["aoiLon"]
+        elif "lon" in data and "aoi_lon" not in data:
+            data["aoi_lon"] = data["lon"]
+        elif "lng" in data and "aoi_lon" not in data:
+            data["aoi_lon"] = data["lng"]
+        if "aoiRadiusKm" in data and "aoi_radius_km" not in data:
+            data["aoi_radius_km"] = data["aoiRadiusKm"]
+        elif "radius_km" in data and "aoi_radius_km" not in data:
+            data["aoi_radius_km"] = data["radius_km"]
+        elif "radius" in data and "aoi_radius_km" not in data:
+            data["aoi_radius_km"] = data["radius"]
 
         # Indices mapping
         if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
@@ -224,6 +266,9 @@ class SettlementResponse(BaseModel):
     severity: str
     homes: int
     farms_ha: float
+    total_area_km2: Optional[float] = None
+    flooded_area_km2: Optional[float] = None
+    coordinates: Optional[List[float]] = None
 
     class Config:
         from_attributes = True

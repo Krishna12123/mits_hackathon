@@ -84,9 +84,16 @@ class ASGIClient:
         response_status = 500
         response_headers = {}
         response_body = []
+        body_sent = False
+        disconnect_event = asyncio.Event()
 
         async def receive():
-            return {"type": "http.request", "body": body_bytes, "more_body": False}
+            nonlocal body_sent
+            if not body_sent:
+                body_sent = True
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
+            await disconnect_event.wait()
+            return {"type": "http.disconnect"}
 
         async def send(message):
             nonlocal response_status, response_headers
@@ -98,8 +105,13 @@ class ASGIClient:
                 }
             elif message["type"] == "http.response.body":
                 response_body.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    disconnect_event.set()
 
-        await self.app(scope, receive, send)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            disconnect_event.set()
         return ASGIResponse(response_status, response_headers, b"".join(response_body))
 
     def get(self, path: str, params=None, headers=None) -> ASGIResponse:
