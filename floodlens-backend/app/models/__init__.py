@@ -23,6 +23,10 @@ from app.models.flood import (
     FloodAnalysisRequest,
     FloodStatusResponse,
 )
+from app.models.refine import (
+    RefineRequest,
+    RefineResponse,
+)
 
 __all__ = [
     "Base",
@@ -45,4 +49,6 @@ __all__ = [
     "ReportListResponse",
     "FloodAnalysisRequest",
     "FloodStatusResponse",
+    "RefineRequest",
+    "RefineResponse",
 ]

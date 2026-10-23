@@ -196,9 +196,9 @@
 | Otsu thresholding | Bipasha | ✅ |
 | Majority vote ensemble | Krishna | ✅ |
 | Change detection (post - JRC) | Krishna | ✅ |
-| HAND + slope refinement | Bipasha | ⬜ |
-| Speckle cleaning | Bipasha | ⬜ |
-| SAR gap fill | Bipasha | ⬜ |
+| HAND + slope refinement | Bipasha | ✅ |
+| Speckle cleaning | Bipasha | ✅ |
+| SAR gap fill | Bipasha | ✅ |
 | Accuracy gate (IoU, F1) | Krishna | ✅ |
 | Threshold retune feedback loop | Krishna | ✅ |
 | Settlement impact overlay | Bipasha | ⬜ |
