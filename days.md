@@ -55,9 +55,9 @@
 ### ⚙️ Bipasha (Backend)
 - [x] Implement **NDWI** computation (Sentinel-2 bands)
 - [x] Implement **MNDWI** computation
-- [ ] Implement **AWEI** computation
-- [ ] Implement **SAR VV/VH** band processing (Sentinel-1)
-- [ ] Otsu thresholding per scene for each index
+- [x] Implement **AWEI** computation
+- [x] Implement **SAR VV/VH** band processing (Sentinel-1)
+- [x] Otsu thresholding per scene for each index
 
 ### ⚙️ Krishna (Backend)
 - [x] Implement **majority vote** ensemble (combine all 4 index results)
@@ -191,9 +191,9 @@
 | Cloud masking & preprocessing | Bipasha | ✅ |
 | NDWI computation | Bipasha | ✅ |
 | MNDWI computation | Bipasha | ✅ |
-| AWEI computation | Bipasha | ⬜ |
-| SAR VV/VH processing | Bipasha | ⬜ |
-| Otsu thresholding | Bipasha | ⬜ |
+| AWEI computation | Bipasha | ✅ |
+| SAR VV/VH processing | Bipasha | ✅ |
+| Otsu thresholding | Bipasha | ✅ |
 | Majority vote ensemble | Krishna | ✅ |
 | Change detection (post - JRC) | Krishna | ✅ |
 | HAND + slope refinement | Bipasha | ⬜ |
