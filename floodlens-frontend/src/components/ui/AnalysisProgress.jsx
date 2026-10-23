@@ -189,9 +189,11 @@ export default function AnalysisProgress({
   const isIdle     = status === 'idle'
   const isComplete = status === 'completed'
   const isFailed   = status === 'failed'
+  const isRetuning = status === 'retuning'
 
   // Which pipeline step is currently active?
-  const activeStageIdx = PIPELINE_STAGES.findIndex(s => s.key === status)
+  // When retuning, previous stages are already complete, and detection/refinement is the active stage.
+  const activeStageIdx = isRetuning ? 2 : PIPELINE_STAGES.findIndex(s => s.key === status)
 
   const defaultError =
     'The analysis pipeline encountered an error. Check your inputs and try again. If the issue persists, the satellite data source may be temporarily unavailable.'
@@ -228,6 +230,16 @@ export default function AnalysisProgress({
         </div>
       </div>
 
+      {/* Explicit description for retuning feedback loop */}
+      {isRetuning && (
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[#ffb95f]/10 border border-[#ffb95f]/25 mb-4">
+          <RotateCcw className="w-3.5 h-3.5 text-[#ffb95f] shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          <p className="text-xs text-[#ffb95f] font-medium">
+            Refinement Running — Iterative Feedback Loop
+          </p>
+        </div>
+      )}
+
       {/* ── Indeterminate progress rail (running states only) ────── */}
       {isRunning && (
         <div
@@ -263,11 +275,11 @@ export default function AnalysisProgress({
                       active  ? 'text-[#dae2fd]/90' :
                                 'text-[#dae2fd]/28',
                     ].join(' ')}>
-                      {stage.label}
+                      {isRetuning && active ? 'Refining Detection Mask' : stage.label}
                     </p>
                     {active && (
                       <p className="text-[10px] text-[#dae2fd]/40 leading-relaxed mt-0.5">
-                        {stage.description}
+                        {isRetuning ? 'Refinement Running — Iterative Feedback Loop' : stage.description}
                       </p>
                     )}
                   </div>
