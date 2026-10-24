@@ -205,5 +205,105 @@ class Sentinel1SARService:
             "description": "Smooth open water reflects radar signal away from sensor, yielding low dB values.",
         }
 
+    def build_live_sar_mask(
+        self,
+        aoi,
+        start_date: str,
+        end_date: str,
+        crs: Optional[str] = None,
+        crs_transform: Optional[List[float]] = None,
+        vv_threshold_db: float = -16.0,
+    ) -> Dict[str, Any]:
+        """
+        Builds a genuine Sentinel-1 SAR water classification mask on Earth Engine.
+        Filters:
+        - Collection: COPERNICUS/S1_GRD
+        - Bounds: aoi
+        - Date: start_date to end_date
+        - Instrument Mode: IW
+        - Polarizations: VV and VH
+        Classification:
+        - Open water exhibits specular reflection in VV backscatter: VV < vv_threshold_db (-16.0 dB).
+        - Valid observation mask: vv.mask().And(vh.mask())
+        - Projection: aligned to crs and crs_transform (e.g. UTM 45N 20m grid)
+        Returns:
+            Dict containing:
+            - "status": "ready" | "no_scenes_found" | "ee_unavailable" | "sar_processing_failed"
+            - "scene_count": int
+            - "mask_image": ee.Image (byte raster with 1 for water, 0 for non-water) or None
+            - "vv_threshold_db": float
+            - "polarizations": ["VV", "VH"]
+            - "instrument_mode": "IW"
+            - "collection": self.COLLECTION_ID
+        """
+        if not self.is_ee_initialized:
+            self._check_ee_status()
+
+        if not self.is_ee_initialized or ee is None:
+            return {
+                "status": "ee_unavailable",
+                "scene_count": 0,
+                "mask_image": None,
+                "vv_threshold_db": vv_threshold_db,
+                "polarizations": ["VV", "VH"],
+                "instrument_mode": "IW",
+                "collection": self.COLLECTION_ID,
+            }
+
+        try:
+            col = (
+                ee.ImageCollection(self.COLLECTION_ID)
+                .filterBounds(aoi)
+                .filterDate(start_date, end_date)
+                .filter(ee.Filter.eq("instrumentMode", "IW"))
+                .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VV"))
+                .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
+            )
+
+            count = col.size().getInfo()
+            if count == 0:
+                logger.info(f"Sentinel-1 SAR query returned 0 scenes between {start_date} and {end_date}.")
+                return {
+                    "status": "no_scenes_found",
+                    "scene_count": 0,
+                    "mask_image": None,
+                    "vv_threshold_db": vv_threshold_db,
+                    "polarizations": ["VV", "VH"],
+                    "instrument_mode": "IW",
+                    "collection": self.COLLECTION_ID,
+                }
+
+            composite = col.median().clip(aoi)
+            if crs and crs_transform:
+                composite = composite.setDefaultProjection(crs=crs, crsTransform=crs_transform)
+
+            vv = composite.select("VV")
+            vh = composite.select("VH")
+
+            valid_mask = vv.mask().And(vh.mask())
+            water_mask = vv.lt(vv_threshold_db).And(valid_mask).rename("sar_water").unmask(0).toByte()
+
+            return {
+                "status": "ready",
+                "scene_count": count,
+                "mask_image": water_mask,
+                "vv_threshold_db": vv_threshold_db,
+                "polarizations": ["VV", "VH"],
+                "instrument_mode": "IW",
+                "collection": self.COLLECTION_ID,
+            }
+        except Exception as e:
+            logger.warning(f"Error building Sentinel-1 SAR mask in Earth Engine: {e}")
+            return {
+                "status": "sar_processing_failed",
+                "scene_count": 0,
+                "mask_image": None,
+                "error": str(e),
+                "vv_threshold_db": vv_threshold_db,
+                "polarizations": ["VV", "VH"],
+                "instrument_mode": "IW",
+                "collection": self.COLLECTION_ID,
+            }
+
 
 sar_service = Sentinel1SARService()

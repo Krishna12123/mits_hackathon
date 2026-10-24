@@ -558,9 +558,41 @@ def detect_flood(
             if export_gee_raster(mask_img, aoi, dest_file, layer_key):
                 geotiff_outputs[layer_key] = str(dest_file)
 
+        # 4. Genuine Sentinel-1 SAR Backscatter Mask (IW mode, VV < -16.0 dB, 20m aligned grid)
+        sar_result = {}
+        try:
+            from app.services.sar_service import sar_service
+            sar_res = sar_service.build_live_sar_mask(
+                aoi=aoi,
+                start_date=post_s_norm,
+                end_date=post_e_norm,
+                crs=ANALYSIS_CRS,
+                crs_transform=GRID_TRANSFORM,
+                vv_threshold_db=-16.0,
+            )
+            sar_result = {
+                "status": sar_res.get("status"),
+                "scene_count": sar_res.get("scene_count", 0),
+                "vv_threshold_db": sar_res.get("vv_threshold_db", -16.0),
+                "polarizations": sar_res.get("polarizations", ["VV", "VH"]),
+            }
+            if sar_res.get("mask_image") is not None and sar_res.get("scene_count", 0) > 0:
+                sar_file = job_dir / "sar_mask.tif"
+                if export_gee_raster(sar_res["mask_image"], aoi, sar_file, "sar"):
+                    geotiff_outputs["sar"] = str(sar_file)
+            else:
+                logger.info(
+                    f"Sentinel-1 SAR mask omitted from geotiff_outputs: {sar_res.get('status')} "
+                    f"(scenes: {sar_res.get('scene_count', 0)})"
+                )
+        except Exception as e:
+            logger.warning(f"Failed to generate Sentinel-1 SAR export: {e}")
+            sar_result = {"status": "sar_processing_failed", "error": str(e)}
+
     return {
         "status": "analysis_complete",
         "data_source": "gee_live",
+        "sar_processing": sar_result,
         "flood_extent_km2": flood_extent_km2,
         "permanent_water_km2": permanent_water_km2,
         "total_water_km2": total_water_km2,
