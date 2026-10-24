@@ -180,30 +180,30 @@ export default function SettlementReport() {
       </div>
 
       {/* ── Printable Report Sheet ───────────────────────────────────────── */}
-      <div className="bg-white text-[#26332C] border-[#DCE5DD] dark:bg-[#0b1326] dark:text-[#dae2fd] dark:border-[#4cd7f6]/20 border rounded-2xl p-8 shadow-sm print:bg-white print:text-black print:border-none print:shadow-none print:p-0 print:rounded-none">
+      <div className="bg-white text-[#263238] border-[#D1D5DB] dark:bg-[#0b1326] dark:text-[#dae2fd] dark:border-[#4cd7f6]/20 border rounded-2xl p-8 shadow-sm print:bg-white print:text-black print:border-none print:shadow-none print:p-0 print:rounded-none">
 
         {/* ── 1. Report Header ────────────────────────────────────────────── */}
         <div className="border-b border-[#4cd7f6]/20 pb-6 print:border-gray-300">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wider uppercase bg-[#E5F2E8] text-[#166534] border border-[#DCE5DD] dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] dark:border-[#4cd7f6]/30 print:border-gray-400 print:text-gray-800 print:bg-gray-100">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wider uppercase bg-[#E8F5E9] text-[#166534] border border-[#D1D5DB] dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] dark:border-[#4cd7f6]/30 print:border-gray-400 print:text-gray-800 print:bg-gray-100">
                   FloodLens Executive Assessment
                 </span>
                 <span className="text-xs text-[#dae2fd]/40 font-mono print:text-gray-500">
                   REF: FL-RPT-{new Date().getFullYear()}
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#26332C] dark:text-white font-display print:text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#263238] dark:text-white font-display print:text-gray-900">
                 Settlement Flood Impact Summary Report
               </h1>
-              <p className="text-[#647067] dark:text-[#dae2fd]/70 text-sm mt-1 print:text-gray-600">
+              <p className="text-[#6B7280] dark:text-[#dae2fd]/70 text-sm mt-1 print:text-gray-600">
                 Automated spatial intersection of satellite flood extents with OpenStreetMap settlement footprints.
               </p>
             </div>
 
             {/* Timestamp & System Stamp */}
-            <div className="text-left sm:text-right shrink-0 bg-[#F1F5F1] border-[#DCE5DD] dark:bg-[#131b2e]/60 dark:border-[#4cd7f6]/15 p-3 rounded-xl border print:bg-gray-50 print:border-gray-200">
+            <div className="text-left sm:text-right shrink-0 bg-[#F5F7F6] border-[#D1D5DB] dark:bg-[#131b2e]/60 dark:border-[#4cd7f6]/15 p-3 rounded-xl border print:bg-gray-50 print:border-gray-200">
               <p className="text-[11px] uppercase tracking-wider text-[#dae2fd]/50 font-semibold print:text-gray-500">
                 Generated Date / Time
               </p>

@@ -891,15 +891,15 @@ export default function Configure() {
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#26332C] dark:text-white font-display">Flood Analysis</h1>
-          <p className="text-[#647067] dark:text-[#dae2fd]/45 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#263238] dark:text-white font-display">Flood Analysis</h1>
+          <p className="text-[#6B7280] dark:text-[#dae2fd]/45 text-sm mt-1">
             Configure region, date ranges, and satellite source — then run the flood detection pipeline.
           </p>
         </div>
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-white hover:bg-[#F1F5F1] border border-[#166534] rounded-xl transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-white hover:bg-[#F5F7F6] border border-[#166534] rounded-xl transition-all shadow-sm"
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Go to Dashboard</span>
@@ -907,7 +907,7 @@ export default function Configure() {
           <button
             type="button"
             onClick={() => setShowGuide(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-[#E5F2E8] hover:bg-[#E5F2E8]/80 border border-[#DCE5DD] dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/10 dark:border-[#4cd7f6]/30 rounded-xl transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-[#E8F5E9] hover:bg-[#E8F5E9]/80 border border-[#D1D5DB] dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/10 dark:border-[#4cd7f6]/30 rounded-xl transition-all shadow-sm"
             aria-label="Open Judge Onboarding Guide"
           >
             <BookOpen className="w-4 h-4 text-[#166534] dark:text-[#4cd7f6]" />
@@ -1018,7 +1018,7 @@ export default function Configure() {
           <SectionCard icon={Calendar} title="Date Ranges">
             {/* Pre-flood */}
             <div>
-              <p className="text-xs font-semibold text-[#26332C] dark:text-[#dae2fd]/55 uppercase tracking-wider mb-2.5">
+              <p className="text-xs font-semibold text-[#263238] dark:text-[#dae2fd]/55 uppercase tracking-wider mb-2.5">
                 Pre-flood Period <span className="text-red-400">*</span>
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -1050,7 +1050,7 @@ export default function Configure() {
             </div>
 
             <div className="border-t border-[#D1D5DB] dark:border-[#4cd7f6]/8 pt-4">
-              <p className="text-xs font-semibold text-[#26332C] dark:text-[#dae2fd]/55 uppercase tracking-wider mb-2.5">
+              <p className="text-xs font-semibold text-[#263238] dark:text-[#dae2fd]/55 uppercase tracking-wider mb-2.5">
                 Post-flood Period <span className="text-red-400">*</span>
               </p>
               <div className="grid grid-cols-2 gap-3">

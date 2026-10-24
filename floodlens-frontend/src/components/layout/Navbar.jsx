@@ -15,30 +15,30 @@ export default function Navbar() {
   const linkCls = ({ isActive }) =>
     `px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
       isActive
-        ? 'text-[#166534] bg-[#E5F2E8] font-semibold dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/8'
-        : 'text-[#647067] hover:text-[#26332C] hover:bg-[#F1F5F1] dark:text-[#dae2fd]/65 dark:hover:text-[#dae2fd] dark:hover:bg-white/5'
+        ? 'text-[#166534] bg-[#E8F5E9] font-semibold dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/8'
+        : 'text-[#6B7280] hover:text-[#263238] hover:bg-[#F5F7F6] dark:text-[#dae2fd]/65 dark:hover:text-[#dae2fd] dark:hover:bg-white/5'
     }`
 
   const mobileLinkCls = ({ isActive }) =>
     `block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
       isActive
-        ? 'text-[#166534] bg-[#E5F2E8] font-semibold dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/8'
-        : 'text-[#647067] hover:text-[#26332C] hover:bg-[#F1F5F1] dark:text-[#dae2fd]/65 dark:hover:text-[#dae2fd] dark:hover:bg-white/5'
+        ? 'text-[#166534] bg-[#E8F5E9] font-semibold dark:text-[#4cd7f6] dark:bg-[#4cd7f6]/8'
+        : 'text-[#6B7280] hover:text-[#263238] hover:bg-[#F5F7F6] dark:text-[#dae2fd]/65 dark:hover:text-[#dae2fd] dark:hover:bg-white/5'
     }`
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 text-[#26332C] dark:bg-[#0b1326]/95 dark:text-[#dae2fd] backdrop-blur-md border-b border-[#DCE5DD] dark:border-[#4cd7f6]/10 transition-colors duration-150">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 text-[#263238] dark:bg-[#0b1326]/95 dark:text-[#dae2fd] backdrop-blur-md border-b border-[#D1D5DB] dark:border-[#4cd7f6]/10 transition-colors duration-150">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* ── Logo / Branding — always navigates to Home ── */}
           <Link to="/" className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-[#E5F2E8] border border-[#DCE5DD] dark:bg-[#4cd7f6]/10 dark:border-[#4cd7f6]/25 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-[#E8F5E9] border border-[#D1D5DB] dark:bg-[#4cd7f6]/10 dark:border-[#4cd7f6]/25 flex items-center justify-center">
               <Satellite className="w-4 h-4 text-[#166534] dark:text-[#4cd7f6]" />
             </div>
             <div>
-              <p className="text-[#26332C] dark:text-white font-bold text-base leading-none font-display">FloodLens</p>
-              <p className="text-[#647067] dark:text-[#4cd7f6]/50 text-[9px] tracking-[0.15em] uppercase mt-0.5">NAKSHATRA 2026</p>
+              <p className="text-[#263238] dark:text-white font-bold text-base leading-none font-display">FloodLens</p>
+              <p className="text-[#6B7280] dark:text-[#4cd7f6]/50 text-[9px] tracking-[0.15em] uppercase mt-0.5">NAKSHATRA 2026</p>
             </div>
           </Link>
 
@@ -69,13 +69,13 @@ export default function Navbar() {
               onClick={toggleTheme}
               aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
               title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="p-2 rounded-lg border border-[#DCE5DD] bg-white hover:bg-[#F1F5F1] text-[#26332C] dark:border-[#29374B] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors shadow-sm"
+              className="p-2 rounded-lg border border-[#D1D5DB] bg-white hover:bg-[#F5F7F6] text-[#263238] dark:border-[#29374B] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors shadow-sm"
             >
               {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
             <Link
               to="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-white hover:bg-[#F1F5F1] border border-[#166534] rounded-lg transition-all duration-150 shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#166534] bg-white hover:bg-[#F5F7F6] border border-[#166534] rounded-lg transition-all duration-150 shadow-sm"
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Go to Dashboard
@@ -101,7 +101,7 @@ export default function Navbar() {
 
       {/* ── Mobile dropdown ── */}
       {mobileOpen && (
-        <div className="md:hidden bg-white dark:bg-[#131b2e] border-t border-[#DCE5DD] dark:border-[#4cd7f6]/10 px-4 py-4 space-y-1">
+        <div className="md:hidden bg-white dark:bg-[#131b2e] border-t border-[#D1D5DB] dark:border-[#4cd7f6]/10 px-4 py-4 space-y-1">
           <NavLink
             to="/"
             end
@@ -147,7 +147,7 @@ export default function Navbar() {
             <Link
               to="/dashboard"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-center gap-2 w-full text-center px-4 py-2.5 bg-white text-[#166534] border border-[#166534] text-sm font-semibold rounded-lg hover:bg-[#F1F5F1] transition-all duration-150"
+              className="flex items-center justify-center gap-2 w-full text-center px-4 py-2.5 bg-white text-[#166534] border border-[#166534] text-sm font-semibold rounded-lg hover:bg-[#F5F7F6] transition-all duration-150"
             >
               <LayoutDashboard className="w-4 h-4" />
               Go to Dashboard

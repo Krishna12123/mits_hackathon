@@ -480,8 +480,8 @@ export default function Settlements() {
       {/* ── Page Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#26332C] dark:text-white font-display">Settlement Impact</h1>
-          <p className="text-[#647067] dark:text-[#dae2fd]/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#263238] dark:text-white font-display">Settlement Impact</h1>
+          <p className="text-[#6B7280] dark:text-[#dae2fd]/50 text-sm mt-1">
             Spatial intersection of satellite flood extents with OpenStreetMap settlement footprints.
           </p>
         </div>
@@ -491,7 +491,7 @@ export default function Settlements() {
           {/* Printable Report */}
           <Link
             to="/dashboard/settlements/report"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#166534] text-[#166534] hover:bg-[#F1F5F1] dark:bg-[#131b2e] dark:border-[#4cd7f6]/25 dark:text-[#4cd7f6] shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#166534] text-[#166534] hover:bg-[#F5F7F6] dark:bg-[#131b2e] dark:border-[#4cd7f6]/25 dark:text-[#4cd7f6] shadow-sm transition-all"
             title="Open printable settlement impact summary report"
             aria-label="View Printable Settlement Impact Report"
           >
@@ -661,15 +661,15 @@ export default function Settlements() {
             key={label}
             className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl p-4 flex items-center gap-3.5"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#E5F2E8] text-[#166534] border border-[#D1D5DB] dark:border-transparent dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#E8F5E9] text-[#166534] border border-[#D1D5DB] dark:border-transparent dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] flex items-center justify-center shrink-0">
               <Icon className="w-5 h-5 text-[#4cd7f6]" />
             </div>
             <div>
-              <p className="text-xl font-bold text-[#26332C] dark:text-white font-display">
+              <p className="text-xl font-bold text-[#263238] dark:text-white font-display">
                 {value}
                 <span className="text-xs font-normal text-slate-400 dark:text-[#dae2fd]/40 ml-1.5">{unit}</span>
               </p>
-              <p className="text-xs text-[#647067] dark:text-[#dae2fd]/45 mt-0.5">{label}</p>
+              <p className="text-xs text-[#6B7280] dark:text-[#dae2fd]/45 mt-0.5">{label}</p>
             </div>
           </div>
         ))}
@@ -681,7 +681,7 @@ export default function Settlements() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-[#4cd7f6]" />
-            <h2 className="text-sm font-semibold text-[#26332C] dark:text-white font-display">
+            <h2 className="text-sm font-semibold text-[#263238] dark:text-white font-display">
               Settlement Impact Analytics
             </h2>
           </div>
@@ -850,7 +850,7 @@ export default function Settlements() {
               placeholder="Search settlement or district…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white border border-[#D1D5DB] rounded-xl text-sm text-[#26332C] placeholder:text-[#647067]/40 pl-9 pr-3 py-2 focus:outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534]/20 dark:bg-[#0b1326] dark:border-[#4cd7f6]/15 dark:text-[#dae2fd] transition-colors"
+              className="w-full bg-white border border-[#D1D5DB] rounded-xl text-sm text-[#263238] placeholder:text-[#6B7280]/40 pl-9 pr-3 py-2 focus:outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534]/20 dark:bg-[#0b1326] dark:border-[#4cd7f6]/15 dark:text-[#dae2fd] transition-colors"
             />
           </div>
 
@@ -870,7 +870,7 @@ export default function Settlements() {
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
                     active
                       ? 'bg-[#166534] text-white font-semibold shadow-sm dark:bg-[#4cd7f6] dark:text-[#0b1326]'
-                      : 'bg-white text-[#647067] border border-[#D1D5DB] hover:bg-[#F1F5F1] dark:bg-[#0b1326] dark:text-[#dae2fd]/60 dark:border-[#4cd7f6]/12',
+                      : 'bg-white text-[#6B7280] border border-[#D1D5DB] hover:bg-[#F5F7F6] dark:bg-[#0b1326] dark:text-[#dae2fd]/60 dark:border-[#4cd7f6]/12',
                   ].join(' ')}
                 >
                   {label}
@@ -893,7 +893,7 @@ export default function Settlements() {
             <div className="w-10 h-10 rounded-full bg-[#dae2fd]/5 flex items-center justify-center mx-auto text-[#dae2fd]/30">
               <MapPin className="w-5 h-5" />
             </div>
-            <p className="text-sm font-semibold text-[#26332C] dark:text-white font-display">
+            <p className="text-sm font-semibold text-[#263238] dark:text-white font-display">
               No settlements match your filters
             </p>
             <p className="text-xs text-[#dae2fd]/40 max-w-sm mx-auto">
@@ -915,7 +915,7 @@ export default function Settlements() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm min-w-[700px]">
               <thead>
-                <tr className="border-b border-[#D1D5DB] bg-[#F1F5F1] text-[#26332C] dark:border-[#4cd7f6]/10 dark:bg-[#0b1326]/50 dark:text-[#dae2fd]/60">
+                <tr className="border-b border-[#D1D5DB] bg-[#F5F7F6] text-[#263238] dark:border-[#4cd7f6]/10 dark:bg-[#0b1326]/50 dark:text-[#dae2fd]/60">
                   <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Settlement Name
                   </th>
@@ -951,7 +951,7 @@ export default function Settlements() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DCE5DD] dark:divide-[#4cd7f6]/6 text-[#26332C] dark:text-[#dae2fd]">
+              <tbody className="divide-y divide-[#D1D5DB] dark:divide-[#4cd7f6]/6 text-[#263238] dark:text-[#dae2fd]">
                 {processedSettlements.map((s, idx) => {
                   const totalArea = getTotalArea(s)
                   const floodedArea = getFloodedArea(s)

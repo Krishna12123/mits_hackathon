@@ -82,16 +82,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#DCE5DD]/80 dark:border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#D1D5DB]/80 dark:border-slate-800/80">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold text-[#26332C] dark:text-white font-display tracking-tight">Dashboard</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E5F2E8] text-[#166534] border border-[#DCE5DD] dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40">
+            <h1 className="text-2xl font-bold text-[#263238] dark:text-white font-display tracking-tight">Dashboard</h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8F5E9] text-[#166534] border border-[#D1D5DB] dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40">
               <span className="w-1.5 h-1.5 rounded-full bg-[#166534] dark:bg-blue-500 animate-pulse" />
               Live Monitoring
             </span>
           </div>
-          <p className="text-[#647067] dark:text-slate-400 text-xs sm:text-sm mt-1">
+          <p className="text-[#6B7280] dark:text-slate-400 text-xs sm:text-sm mt-1">
             Real-time flood monitoring · Bihar Region · Sentinel-2 / Landsat-9
           </p>
         </div>
@@ -108,14 +108,14 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Map Preview Card */}
         <div className="xl:col-span-2 card p-0 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#DCE5DD] dark:border-slate-800/80">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#D1D5DB] dark:border-slate-800/80">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-[#E5F2E8] dark:bg-blue-950/50 flex items-center justify-center shrink-0 border border-[#DCE5DD] dark:border-blue-800/40">
+              <div className="w-7 h-7 rounded-lg bg-[#E8F5E9] dark:bg-blue-950/50 flex items-center justify-center shrink-0 border border-[#D1D5DB] dark:border-blue-800/40">
                 <Layers className="w-3.5 h-3.5 text-[#166534] dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-[#26332C] dark:text-white font-semibold text-sm font-display">Live Flood Map</h2>
-                <p className="text-[#647067] dark:text-slate-400 text-[11px] mt-0.5">GeoJSON overlay · OpenStreetMap base</p>
+                <h2 className="text-[#263238] dark:text-white font-semibold text-sm font-display">Live Flood Map</h2>
+                <p className="text-[#6B7280] dark:text-slate-400 text-[11px] mt-0.5">GeoJSON overlay · OpenStreetMap base</p>
               </div>
             </div>
             <Link
@@ -133,22 +133,22 @@ export default function Dashboard() {
 
         {/* Recent Jobs Card */}
         <div className="card flex flex-col">
-          <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-[#DCE5DD] dark:border-slate-800/80">
+          <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-[#D1D5DB] dark:border-slate-800/80">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#647067] dark:text-slate-400" />
-              <h2 className="text-[#26332C] dark:text-white font-semibold text-sm font-display">Recent GEE Jobs</h2>
+              <Clock className="w-4 h-4 text-[#6B7280] dark:text-slate-400" />
+              <h2 className="text-[#263238] dark:text-white font-semibold text-sm font-display">Recent GEE Jobs</h2>
             </div>
-            <span className="text-[11px] font-medium text-slate-400 dark:text-[#647067] font-mono">Archive feed</span>
+            <span className="text-[11px] font-medium text-slate-400 dark:text-[#6B7280] font-mono">Archive feed</span>
           </div>
           <div className="space-y-2.5 flex-1">
             {recentJobs.map((job) => (
               <div
                 key={job.id}
-                className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-[#DCE5DD] dark:border-slate-800/70 hover:bg-[#F1F5F1] dark:hover:bg-slate-800/40 transition-colors"
+                className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-[#D1D5DB] dark:border-slate-800/70 hover:bg-[#F5F7F6] dark:hover:bg-slate-800/40 transition-colors"
               >
                 <div>
-                  <p className="text-xs font-bold text-[#26332C] dark:text-white font-mono">{job.id}</p>
-                  <p className="text-[11px] text-[#647067] dark:text-slate-400 mt-0.5">{job.source} · {job.date}</p>
+                  <p className="text-xs font-bold text-[#263238] dark:text-white font-mono">{job.id}</p>
+                  <p className="text-[11px] text-[#6B7280] dark:text-slate-400 mt-0.5">{job.source} · {job.date}</p>
                 </div>
                 <div className="text-right">
                   <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${statusColors[job.status]}`}>
@@ -167,8 +167,8 @@ export default function Dashboard() {
         {/* Flood Extent Timeline */}
         <div className="card">
           <div className="mb-4">
-            <h2 className="text-[#26332C] dark:text-white font-semibold text-sm font-display">Flood Extent Timeline</h2>
-            <p className="text-[#647067] dark:text-slate-400 text-xs mt-0.5">Pre/Post change detection · Last 8 days inundation area</p>
+            <h2 className="text-[#263238] dark:text-white font-semibold text-sm font-display">Flood Extent Timeline</h2>
+            <p className="text-[#6B7280] dark:text-slate-400 text-xs mt-0.5">Pre/Post change detection · Last 8 days inundation area</p>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={timelineData}>
@@ -201,8 +201,8 @@ export default function Dashboard() {
         {/* District Comparison */}
         <div className="card">
           <div className="mb-4">
-            <h2 className="text-[#26332C] dark:text-white font-semibold text-sm font-display">District Flood Comparison</h2>
-            <p className="text-[#647067] dark:text-slate-400 text-xs mt-0.5">Flooded vs. total land area (km²)</p>
+            <h2 className="text-[#263238] dark:text-white font-semibold text-sm font-display">District Flood Comparison</h2>
+            <p className="text-[#6B7280] dark:text-slate-400 text-xs mt-0.5">Flooded vs. total land area (km²)</p>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={districtData}>

@@ -161,6 +161,10 @@ export function useFloodAnalysis() {
           try {
             const resultData = await fetchResults(jobId)
             setResults(resultData)
+            try {
+              localStorage.setItem('fl_latest_result', JSON.stringify(resultData))
+              localStorage.setItem('fl_latest_job_id', jobId)
+            } catch (_) {}
           } catch (resultErr) {
             setError(resolveErrorMessage(resultErr))
             setStatus('failed')

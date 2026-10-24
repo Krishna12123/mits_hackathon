@@ -5,21 +5,21 @@
 
 @layer base {
   body {
-    @apply bg-white text-[#26332C] dark:bg-[#0B1220] dark:text-slate-100 font-sans transition-colors duration-150;
+    @apply bg-white text-[#263238] dark:bg-[#0B1220] dark:text-slate-100 font-sans transition-colors duration-150;
     -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white border border-[#DCE5DD] shadow-sm dark:bg-[#111C2E] dark:border-[#29374B] rounded-xl p-5 transition-colors duration-150;
+    @apply bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#111C2E] dark:border-[#29374B] rounded-xl p-5 transition-colors duration-150;
   }
   .btn-primary {
     @apply bg-[#166534] hover:bg-[#14532D] text-white font-semibold py-2 px-4 rounded-lg
            transition-all duration-200 flex items-center gap-2 text-sm shadow-sm;
   }
   .btn-secondary {
-    @apply bg-white hover:bg-[#F1F5F1] text-[#166534] font-medium py-2 px-4 rounded-lg
+    @apply bg-white hover:bg-[#F5F7F6] text-[#166534] font-medium py-2 px-4 rounded-lg
            border border-[#166534] shadow-sm
            dark:bg-slate-800/90 dark:hover:bg-slate-800 dark:text-slate-200 dark:border-slate-700
            transition-all duration-200 flex items-center gap-2 text-sm;
@@ -36,11 +36,11 @@
   }
   .nav-link {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-           text-[#647067] hover:text-[#26332C] hover:bg-[#F1F5F1]
+           text-[#6B7280] hover:text-[#263238] hover:bg-[#F5F7F6]
            dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60 transition-all duration-150;
   }
   .nav-link.active {
-    @apply bg-[#E5F2E8] text-[#166534] font-semibold border border-[#DCE5DD]
+    @apply bg-[#E8F5E9] text-[#166534] font-semibold border border-[#D1D5DB]
            dark:bg-brand-600/20 dark:text-brand-400 dark:border-brand-600/30;
   }
 }
