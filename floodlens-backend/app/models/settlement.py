@@ -15,4 +15,8 @@ class Settlement(Base):
     severity = Column(String(32), default="safe")  # safe, low, medium, high, severe
     homes = Column(Integer, default=0)
     farms_ha = Column(Float, default=0.0)
+    total_area_km2 = Column(Float, nullable=True)
+    flooded_area_km2 = Column(Float, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     geom_geojson = Column(JSON, nullable=True)

@@ -8,18 +8,98 @@ Tests:
 - Full Refinement Pipeline Orchestration
 - /api/refine Endpoint Integration
 """
+import asyncio
+import json
 import unittest
-from fastapi.testclient import TestClient
+from typing import Optional, Any
+from urllib.parse import urlencode
 
 from app.services.refinement_service import refinement_service
 from app.models.refine import RefineRequest, RefineResponse
 from main import app
 
 
+class ASGIResponse:
+    def __init__(self, status_code: int, headers: dict, body: bytes):
+        self.status_code = status_code
+        self.headers = headers
+        self.body = body
+
+    def json(self) -> Any:
+        return json.loads(self.body.decode("utf-8"))
+
+
+class ASGIClient:
+    def __init__(self, asgi_app):
+        self.app = asgi_app
+
+    async def get(self, path: str) -> ASGIResponse:
+        return await self.request("GET", path)
+
+    async def post(self, path: str, json: Optional[Any] = None) -> ASGIResponse:
+        return await self.request("POST", path, json_data=json)
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        json_data: Optional[Any] = None,
+    ) -> ASGIResponse:
+        raw_headers = [(b"host", b"testserver")]
+        body_bytes = b""
+        if json_data is not None:
+            body_bytes = json.dumps(json_data).encode("utf-8")
+            raw_headers.append((b"content-type", b"application/json"))
+
+        scope = {
+            "type": "http",
+            "http_version": "1.1",
+            "method": method.upper(),
+            "path": path,
+            "raw_path": path.encode("utf-8"),
+            "query_string": b"",
+            "headers": raw_headers,
+            "app": self.app,
+        }
+
+        response_status = 500
+        response_headers = {}
+        response_body = []
+        body_sent = False
+        disconnect_event = asyncio.Event()
+
+        async def receive():
+            nonlocal body_sent
+            if not body_sent:
+                body_sent = True
+                return {"type": "http.request", "body": body_bytes, "more_body": False}
+            await disconnect_event.wait()
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            nonlocal response_status, response_headers
+            if message["type"] == "http.response.start":
+                response_status = message["status"]
+                response_headers = {
+                    k.decode("utf-8").lower(): v.decode("utf-8")
+                    for k, v in message.get("headers", [])
+                }
+            elif message["type"] == "http.response.body":
+                response_body.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    disconnect_event.set()
+
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            disconnect_event.set()
+        return ASGIResponse(response_status, response_headers, b"".join(response_body))
+
+
 class TestRefinementService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = ASGIClient(app)
 
     def test_slope_filter_removes_steep_terrain(self):
         """Water on slopes > 5 deg should be removed; water on flat slopes retained."""
@@ -156,7 +236,7 @@ class TestRefinementService(unittest.TestCase):
 
     def test_api_refine_status(self):
         """GET /api/refine/status endpoint check."""
-        response = self.client.get("/api/refine/status")
+        response = asyncio.run(self.client.get("/api/refine/status"))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["status"], "ready")
@@ -172,7 +252,7 @@ class TestRefinementService(unittest.TestCase):
             "enable_hand_filter": False,
             "enable_gap_fill": False,
         }
-        response = self.client.post("/api/refine", json=payload)
+        response = asyncio.run(self.client.post("/api/refine", json=payload))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["status"], "success")

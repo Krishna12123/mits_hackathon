@@ -3,6 +3,15 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional, List, Any, Dict
 
 
+# --- Generic & Error Schemas ---
+class ErrorResponse(BaseModel):
+    error: str
+    detail: str
+    status_code: int = 400
+    request_id: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
 # --- Auth Schemas ---
 class LoginRequest(BaseModel):
     username: str
@@ -50,9 +59,10 @@ class DetectRequest(BaseModel):
             return values
         data = values.copy()
 
-        # Satellite source mapping
-        if "satellite_source" in data and not data.get("satellite"):
-            src = str(data["satellite_source"]).lower()
+        # Satellite source mapping (supports camelCase and snake_case)
+        sat_input = data.get("satellite_source") or data.get("satelliteSource")
+        if sat_input and not data.get("satellite"):
+            src = str(sat_input).lower()
             if "sar" in src or "sentinel-1" in src:
                 data["satellite"] = "Sentinel-1"
             elif "landsat" in src:
@@ -243,6 +253,9 @@ class SettlementResponse(BaseModel):
     severity: str
     homes: int
     farms_ha: float
+    total_area_km2: Optional[float] = None
+    flooded_area_km2: Optional[float] = None
+    coordinates: Optional[List[float]] = None
 
     class Config:
         from_attributes = True
