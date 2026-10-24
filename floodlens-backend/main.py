@@ -5,7 +5,23 @@ NAKSHATRA 2026 Aerospace Hackathon · Team Code Matrix
 import os
 import time
 import uuid
-from fastapi import FastAPI, Depends
+<<<<<<<<< Temporary merge branch 1
+import logging
+from contextlib import asynccontextmanager
+from typing import Dict, Any
+
+from fastapi import FastAPI, Depends, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+=========
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+from fastapi import FastAPI, Depends, HTTPException
+>>>>>>>>> Temporary merge branch 2
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -98,36 +114,59 @@ def init_earth_engine() -> dict:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize DB tables and seeds, start background job queue
-    print("🚀 FloodLens API starting up…")
+    print("[API] FloodLens API starting up...")
+>>>>>>>>> Temporary merge branch 2
     try:
         init_db()
         print("[API] Database initialized successfully.")
     except Exception as e:
-        print(f"⚠️ Database initialization warning: {e}")
+<<<<<<<<< Temporary merge branch 1
+        logger.warning(f"⚠️ Database initialization note: {e}")
 
-    # Google Earth Engine initialization
+    # Google Earth Engine initialization (optional for live satellite pulls)
     try:
         import ee
         ee.Initialize(project="floodlens-512416")
-        print("✅ Google Earth Engine initialized successfully (project: floodlens-512416).")
+        logger.info("✅ Google Earth Engine initialized successfully (project: floodlens-512416).")
     except Exception as e:
-        print(f"⚠️ Earth Engine initialization note: {e}")
+        logger.info(f"ℹ️ Earth Engine initialization note: {e}")
 
     try:
         await job_queue.start()
-        print("✅ Background job queue worker pool started.")
+        logger.info("✅ Background job queue worker pool started.")
     except Exception as e:
-        print(f"⚠️ Background job queue startup warning: {e}")
+        logger.warning(f"⚠️ Background job queue startup warning: {e}")
+=========
+        print(f"[API] Database initialization warning: {e}")
+
+    # Google Earth Engine initialization
+    app.state.gee_status = init_earth_engine()
+
+    try:
+        await job_queue.start()
+        print("[API] Background job queue worker pool started.")
+    except Exception as e:
+        print(f"[API] Background job queue startup warning: {e}")
+>>>>>>>>> Temporary merge branch 2
 
     yield
 
     # Shutdown
-    print("🛑 FloodLens API shutting down…")
+<<<<<<<<< Temporary merge branch 1
+    logger.info("🛑 FloodLens API shutting down…")
     try:
         await job_queue.stop()
-        print("✅ Background job queue stopped.")
+        logger.info("✅ Background job queue stopped.")
     except Exception as e:
-        print(f"⚠️ Background job queue shutdown error: {e}")
+        logger.error(f"⚠️ Background job queue shutdown error: {e}")
+=========
+    print("[API] FloodLens API shutting down...")
+    try:
+        await job_queue.stop()
+        print("[API] Background job queue stopped.")
+    except Exception as e:
+        print(f"[API] Background job queue shutdown error: {e}")
+>>>>>>>>> Temporary merge branch 2
 
 
 openapi_tags = [

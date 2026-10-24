@@ -5,6 +5,30 @@ import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import ee
+import httpx
+
+logger = logging.getLogger(__name__)
+
+def normalize_date_window(start: str, end: str, default_span_days: int = 14) -> tuple:
+    """
+    Ensures date window is non-empty and end date is inclusive for GEE's half-open [start, end) filter.
+    """
+    try:
+        s_date = datetime.date.fromisoformat(str(start)[:10])
+    except Exception:
+        s_date = datetime.date.today() - datetime.timedelta(days=default_span_days)
+
+    try:
+        e_date = datetime.date.fromisoformat(str(end)[:10])
+    except Exception:
+        e_date = s_date + datetime.timedelta(days=default_span_days)
+
+    if s_date >= e_date:
+        s_date = e_date - datetime.timedelta(days=default_span_days)
+
+    inclusive_end = e_date + datetime.timedelta(days=1)
+    return s_date.isoformat(), inclusive_end.isoformat()
+>>>>>>>>> Temporary merge branch 2
 
 
 CLOUD_LIMIT_PERCENT = 80

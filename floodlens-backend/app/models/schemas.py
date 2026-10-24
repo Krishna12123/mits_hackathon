@@ -77,9 +77,15 @@ class DetectRequest(BaseModel):
             data["pre_date"] = str(data["pre_flood_end"])[:10]
 
         if "post_flood_end" in data and data["post_flood_end"]:
-            data["post_date"] = str(data["post_flood_end"])[:10]
-        elif "post_flood_start" in data and data["post_flood_start"]:
-            data["post_date"] = str(data["post_flood_start"])[:10]
+            data["post_end"] = str(data["post_flood_end"])[:10]
+            data.setdefault("post_date", str(data["post_flood_end"])[:10])
+        elif "post_start" in data and not data.get("post_date"):
+            data["post_date"] = data["post_start"]
+
+        # Mode mapping
+        if "run_mode" in data and not data.get("mode"):
+            data["mode"] = str(data["run_mode"]).lower()
+>>>>>>>>> Temporary merge branch 2
 
         # Indices mapping
         if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
