@@ -98,16 +98,49 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
     min_votes = int(req_data.get("min_votes", 2))
     save_geotiffs = bool(req_data.get("save_geotiff", True))
 
-    result = detection_pipeline.run_detection(
-        job_id=job_id,
-        lat=lat,
-        lon=lon,
-        radius_km=radius_km,
-        pre_date=pre_date,
-        post_date=post_date,
-        min_votes=min_votes,
-        save_geotiffs=save_geotiffs,
-    )
+    mode = str(req_data.get("mode", "demo")).lower()
+    pre_start = req_data.get("pre_start")
+    pre_end = req_data.get("pre_end")
+    post_start = req_data.get("post_start")
+    post_end = req_data.get("post_end")
+
+    if mode == "live":
+        import main
+        gee_status = getattr(main.app.state, "gee_status", {"authenticated": False})
+        if not gee_status.get("authenticated", False):
+            raise ValueError(
+                "Earth Engine is not authenticated. Please configure GEE credentials in .env or switch to Demo mode."
+            )
+        import ee
+        delta = radius_km / 111.0
+        aoi = ee.Geometry.Rectangle([lon - delta, lat - delta, lon + delta, lat + delta])
+        result = detect_flood(
+            aoi=aoi,
+            pre_start=pre_start or pre_date,
+            pre_end=pre_end or pre_date,
+            post_start=post_start or post_date,
+            post_end=post_end or post_date,
+            job_id=job_id,
+            save_geotiffs=save_geotiffs,
+        )
+        if result.get("status") != "analysis_complete":
+            raise ValueError(
+                f"Live Earth Engine analysis stopped: {result.get('message', 'No suitable imagery found')} ({result.get('status')})"
+            )
+        data_source = "gee_live"
+    else:
+        result = detection_pipeline.run_detection(
+            job_id=job_id,
+            lat=lat,
+            lon=lon,
+            radius_km=radius_km,
+            pre_date=pre_date,
+            post_date=post_date,
+            min_votes=min_votes,
+            save_geotiffs=save_geotiffs,
+        )
+        data_source = "synthetic_demo"
+        result["data_source"] = data_source
 
     # Update Job record in database
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -115,11 +148,12 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
         job.status = "completed"
         job.stage = "completed"
         job.progress = 100
+        job.data_source = result.get("data_source", data_source)
         job.flood_extent_km2 = result["flood_extent_km2"]
         job.affected_districts = 3
         job.at_risk_population = int(result["flood_extent_km2"] * 4800)
-        job.ndwi_score = result["otsu_thresholds"].get("NDWI", 0.74)
-        job.result_geojson = result["geojson"]
+        job.ndwi_score = result.get("otsu_thresholds", {}).get("NDWI", 0.74)
+        job.result_geojson = result.get("geojson")
         db.commit()
 
     # Generate and register settlement impact CSV report
@@ -234,6 +268,9 @@ async def detect(req: DetectRequest, background_tasks: BackgroundTasks, db: Sess
     """
     job_id = "JOB-" + str(uuid.uuid4())[:8].upper()
 
+    mode = str(req.mode or "demo").lower()
+    data_source = "gee_live" if mode == "live" else "synthetic_demo"
+
     job = Job(
         id=job_id,
         status="running",
@@ -246,6 +283,7 @@ async def detect(req: DetectRequest, background_tasks: BackgroundTasks, db: Sess
         aoi_radius_km=float(req.aoi_radius_km),
         pre_date=req.pre_date,
         post_date=req.post_date,
+        data_source=data_source,
     )
     db.add(job)
     db.commit()
@@ -287,6 +325,7 @@ async def status(job_id: str, db: Session = Depends(get_db)):
     return JobStatusResponse(
         job_id=job.id,
         status=job.status,
+        data_source=job.data_source or "untracked",
         progress=job.progress or (100 if job.status == "completed" else 0),
         stage=job.stage or job.status,
         error_message=job.error_message,
@@ -311,6 +350,7 @@ async def results(job_id: str, db: Session = Depends(get_db)):
         "jobId": job.id,
         "job_id": job.id,
         "status": job.status,
+        "data_source": job.data_source or "untracked",
         "flooded_area_km2": flooded_area,
         "floodedAreaKm2": flooded_area,
         "affected_settlements": affected_settlements,
@@ -363,6 +403,7 @@ async def summary(db: Session = Depends(get_db)):
             ndwi_score=latest_job.ndwi_score or 0.74,
             satellite=latest_job.satellite or "Sentinel-2",
             last_updated=latest_job.updated_at.isoformat() if latest_job.updated_at else datetime.datetime.utcnow().isoformat(),
+            data_source=latest_job.data_source or "untracked",
         )
 
     return FloodSummaryResponse(

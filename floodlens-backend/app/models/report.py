@@ -13,3 +13,4 @@ class Report(Base):
     status = Column(String(32), default="ready")  # ready, processing, failed
     created_at = Column(String(64), nullable=True)
     file_path = Column(String(512), nullable=True)
+    data_source = Column(String(32), nullable=True, default=None)  # gee_live, synthetic_demo, untracked

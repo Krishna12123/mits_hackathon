@@ -34,6 +34,7 @@ class UserResponse(BaseModel):
 class DetectRequest(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
+    mode: str = Field(default="demo", description="demo or live")
     satellite: str = Field(default="Sentinel-2", description="Sentinel-2, Sentinel-1, or Landsat")
     index: str = Field(default="NDWI", description="NDWI, MNDWI, AWEI, or ALL")
     threshold: float = Field(default=0.3, ge=-1.0, le=1.0)
@@ -43,7 +44,11 @@ class DetectRequest(BaseModel):
     aoi_radius_km: int = Field(default=150, ge=1, le=1000)
     pre_date: str = Field(default="2026-10-11")
     post_date: str = Field(default="2026-10-19")
-    min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble (1-4)")
+    pre_start: Optional[str] = Field(default=None, description="Pre-flood window start date YYYY-MM-DD")
+    pre_end: Optional[str] = Field(default=None, description="Pre-flood window end date YYYY-MM-DD")
+    post_start: Optional[str] = Field(default=None, description="Post-flood window start date YYYY-MM-DD")
+    post_end: Optional[str] = Field(default=None, description="Post-flood window end date YYYY-MM-DD")
+    min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble 1-4")
     save_geotiff: bool = Field(default=True, description="Save intermediate GeoTIFF rasters")
     sync: bool = Field(default=False, description="Run synchronously and return mask immediately")
 
@@ -65,48 +70,16 @@ class DetectRequest(BaseModel):
             else:
                 data["satellite"] = "Sentinel-2"
 
-        # Date mappings (supports camelCase and snake_case)
-        pre_val = (
-            data.get("pre_flood_start")
-            or data.get("preFloodStart")
-            or data.get("pre_flood_end")
-            or data.get("preFloodEnd")
-            or data.get("pre_date")
-            or data.get("preDate")
-        )
-        if pre_val:
-            data["pre_date"] = str(pre_val)[:10]
+        # Date mappings
+        if "pre_flood_start" in data and data["pre_flood_start"]:
+            data["pre_date"] = str(data["pre_flood_start"])[:10]
+        elif "pre_flood_end" in data and data["pre_flood_end"]:
+            data["pre_date"] = str(data["pre_flood_end"])[:10]
 
-        post_val = (
-            data.get("post_flood_end")
-            or data.get("postFloodEnd")
-            or data.get("post_flood_start")
-            or data.get("postFloodStart")
-            or data.get("post_date")
-            or data.get("postDate")
-        )
-        if post_val:
-            data["post_date"] = str(post_val)[:10]
-
-        # Numeric and coordinate aliases
-        if "cloudPct" in data and "cloud_pct" not in data:
-            data["cloud_pct"] = data["cloudPct"]
-        if "aoiLat" in data and "aoi_lat" not in data:
-            data["aoi_lat"] = data["aoiLat"]
-        elif "lat" in data and "aoi_lat" not in data:
-            data["aoi_lat"] = data["lat"]
-        if "aoiLon" in data and "aoi_lon" not in data:
-            data["aoi_lon"] = data["aoiLon"]
-        elif "lon" in data and "aoi_lon" not in data:
-            data["aoi_lon"] = data["lon"]
-        elif "lng" in data and "aoi_lon" not in data:
-            data["aoi_lon"] = data["lng"]
-        if "aoiRadiusKm" in data and "aoi_radius_km" not in data:
-            data["aoi_radius_km"] = data["aoiRadiusKm"]
-        elif "radius_km" in data and "aoi_radius_km" not in data:
-            data["aoi_radius_km"] = data["radius_km"]
-        elif "radius" in data and "aoi_radius_km" not in data:
-            data["aoi_radius_km"] = data["radius"]
+        if "post_flood_end" in data and data["post_flood_end"]:
+            data["post_date"] = str(data["post_flood_end"])[:10]
+        elif "post_flood_start" in data and data["post_flood_start"]:
+            data["post_date"] = str(data["post_flood_start"])[:10]
 
         # Indices mapping
         if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
@@ -133,6 +106,7 @@ class DetectRequest(BaseModel):
 class DetectResultResponse(BaseModel):
     job_id: str
     status: str
+    data_source: Optional[str] = None
     flood_extent_km2: float
     permanent_water_km2: float
     total_water_km2: float
@@ -146,6 +120,7 @@ class JobResponse(BaseModel):
     job_id: str
     jobId: Optional[str] = None
     status: str
+    data_source: Optional[str] = None
     message: Optional[str] = None
 
     @model_validator(mode="before")
@@ -163,6 +138,7 @@ class JobStatusResponse(BaseModel):
     job_id: str
     jobId: Optional[str] = None
     status: str
+    data_source: Optional[str] = None
     progress: int = 0
     stage: Optional[str] = None
     error_message: Optional[str] = None
@@ -192,6 +168,7 @@ class FloodSummaryResponse(BaseModel):
     ndwi_score: float
     satellite: str
     last_updated: str
+    data_source: Optional[str] = None
 
 
 # --- Live Dashboard Schemas ---

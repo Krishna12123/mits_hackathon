@@ -121,9 +121,16 @@ export default function Dashboard() {
               <XAxis dataKey="date" stroke="#4b5563" tick={{ fontSize: 11 }} />
               <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} unit=" km²" />
               <Tooltip
-                contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-                labelStyle={{ color: '#e5e7eb' }}
-                itemStyle={{ color: '#60a5fa' }}
+                contentStyle={{
+                  backgroundColor: 'rgba(11, 19, 38, 0.96)',
+                  borderColor: 'rgba(76, 215, 246, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '10px 14px',
+                }}
+                labelStyle={{ color: '#ffffff', fontWeight: 600, fontSize: '12px', marginBottom: '4px' }}
+                itemStyle={{ color: '#4cd7f6', fontWeight: 600, fontSize: '12px', fontFamily: 'monospace' }}
               />
               <Area type="monotone" dataKey="area" stroke="#1285f0" fill="url(#floodGrad)" strokeWidth={2} name="Flood Area" />
             </AreaChart>
@@ -140,8 +147,16 @@ export default function Dashboard() {
               <XAxis dataKey="name" stroke="#4b5563" tick={{ fontSize: 11 }} />
               <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} />
               <Tooltip
-                contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-                labelStyle={{ color: '#e5e7eb' }}
+                contentStyle={{
+                  backgroundColor: 'rgba(11, 19, 38, 0.96)',
+                  borderColor: 'rgba(76, 215, 246, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '10px 14px',
+                }}
+                labelStyle={{ color: '#ffffff', fontWeight: 600, fontSize: '12px', marginBottom: '4px' }}
+                itemStyle={{ fontSize: '12px', fontWeight: 500 }}
               />
               <Legend wrapperStyle={{ fontSize: 12, color: '#9ca3af' }} />
               <Bar dataKey="flooded" fill="#ef4444" name="Flooded" radius={[4, 4, 0, 0]} />

@@ -3,9 +3,27 @@ floodlens-frontend/dist/
 floodlens-backend/__pycache__/
 floodlens-backend/venv/
 floodlens-backend/.venv/
-floodlens-backend/.env
 floodlens-backend/outputs/
 outputs/
 *.pyc
 *.db
 .DS_Store
+
+# Secret-bearing environment files (preserve .env.example)
+.env
+.env*.local
+floodlens-backend/.env
+floodlens-backend/.env*.local
+!.env.example
+!floodlens-backend/.env.example
+!floodlens-frontend/.env.example
+
+# Service Account keys and private credentials (narrowly scoped to prevent ignoring project configs)
+*-key*.json
+*service_account*.json
+*service-account*.json
+*credentials*.json
+*secret*.json
+*.pem
+*.p12
+.gcp/
