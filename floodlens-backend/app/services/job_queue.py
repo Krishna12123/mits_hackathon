@@ -280,9 +280,16 @@ class AsyncJobQueue:
 
                 # Register intermediate GeoTIFF outputs
                 if result.get("geotiff_outputs"):
+                    from app.services.raster_service import validate_raster
                     for name, path in result["geotiff_outputs"].items():
                         report_id = f"{job_id}-{name.upper()[:12]}"
-                        is_valid = bool(path and os.path.exists(path) and os.path.getsize(path) > 0)
+                        val_res = validate_raster(path, expected_type="mask") if path and os.path.exists(path) else None
+                        is_valid = bool(val_res and val_res.is_valid)
+                        if not is_valid and path and os.path.exists(path):
+                            logger.warning(
+                                f"GeoTIFF {name} at {path} failed raster validation: "
+                                f"{val_res.error_message if val_res else 'File missing'}"
+                            )
                         file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if is_valid else None
                         rpt = Report(
                             id=report_id,
