@@ -33,10 +33,30 @@ async def list_reports(db: Session = Depends(get_db)):
             status=r.status,
             date=r.created_at,
             data_source=r.data_source,
+            provenance=r.provenance,
         )
         for r in reports
     ]
     return ReportListResponse(reports=items)
+
+
+@router.get("/{report_id}/details", response_model=ReportItem)
+@router.get("/{report_id}/provenance", response_model=ReportItem)
+async def get_report_details(report_id: str, db: Session = Depends(get_db)):
+    """Fetches full metadata and truthful provenance for a single report artifact."""
+    report = db.query(Report).filter(Report.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return ReportItem(
+        id=report.id,
+        title=report.title,
+        type=report.type,
+        size=report.size,
+        status=report.status,
+        date=report.created_at,
+        data_source=report.data_source,
+        provenance=report.provenance,
+    )
 
 
 @router.get("/settlement-impact/csv")
@@ -69,7 +89,12 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
     if report.status == "processing":
         raise HTTPException(status_code=202, detail="Report generation in progress")
     if report.status in ("failed", "unavailable"):
-        raise HTTPException(status_code=404, detail=f"Artifact unavailable (status: {report.status})")
+        reason = (
+            report.provenance.get("unavailable_reason")
+            if (report.provenance and isinstance(report.provenance, dict))
+            else f"status: {report.status}"
+        )
+        raise HTTPException(status_code=404, detail=f"Artifact unavailable: {reason}")
 
     # If JSON description is explicitly requested
     if as_json:
@@ -80,6 +105,7 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
             "download_url": f"/api/reports/{report.id}/download",
             "message": f"Artifact ready for download ({report.size or 'N/A'})",
             "data_source": report.data_source,
+            "provenance": report.provenance,
         }
 
     # Handle CSV reports

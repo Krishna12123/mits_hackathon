@@ -270,6 +270,7 @@ class ReportItem(BaseModel):
     status: str
     date: Optional[str] = None
     data_source: Optional[str] = None
+    provenance: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True
