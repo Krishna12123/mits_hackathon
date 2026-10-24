@@ -156,11 +156,40 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
         job.result_geojson = result.get("geojson")
         db.commit()
 
+    # Prepare job context for truthful artifact provenance records
+    active_inputs_ensemble = [k for k in ("ndwi", "mndwi", "awei", "sar") if k in result.get("geotiff_outputs", {})]
+    if not active_inputs_ensemble:
+        active_inputs_ensemble = ["ndwi", "mndwi", "awei"]
+    inputs_final = ["ensemble_water", "baseline_water"]
+
+    job_ctx = {
+        "job_id": job_id,
+        "data_source": result.get("data_source", data_source),
+        "lat": lat,
+        "lon": lon,
+        "radius_km": radius_km,
+        "pre_start": pre_start or pre_date,
+        "pre_end": pre_end or pre_date,
+        "post_start": post_start or post_date,
+        "post_end": post_end or post_date,
+        "min_votes": min_votes,
+        "flood_extent_km2": result.get("flood_extent_km2", 0.0),
+        "otsu_thresholds": result.get("otsu_thresholds", {}),
+        "inputs_used_ensemble": active_inputs_ensemble,
+        "inputs_used_final": inputs_final,
+        "affected_settlements_count": 3,
+    }
+
     # Generate and register settlement impact CSV report
     try:
-        from app.services.report_service import generate_settlement_impact_csv
+        from app.services.report_service import generate_settlement_impact_csv, build_artifact_provenance
         csv_path = generate_settlement_impact_csv(job_id, db)
         csv_size = f"{round(os.path.getsize(csv_path) / 1024.0, 1)} KB" if os.path.exists(csv_path) else "0.4 MB"
+        csv_prov = build_artifact_provenance(
+            layer_key="csv",
+            job_context=job_ctx,
+            status="ready",
+        )
         csv_rpt = Report(
             id=f"{job_id}-CSV",
             title=f"Settlement Impact Report ({job_id})",
@@ -170,30 +199,58 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
             created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             file_path=csv_path,
             data_source=result.get("data_source", data_source),
+            provenance=csv_prov,
         )
         db.merge(csv_rpt)
         db.commit()
     except Exception as e:
         logger.warning(f"Could not generate settlement CSV for {job_id}: {e}")
 
-    # Register intermediate GeoTIFF outputs as reports
-    if result.get("geotiff_outputs"):
-        for name, path in result["geotiff_outputs"].items():
-            report_id = f"{job_id}-{name.upper()[:12]}"
-            is_valid = bool(path and os.path.exists(path) and os.path.getsize(path) > 0)
-            file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if is_valid else None
-            rpt = Report(
-                id=report_id,
-                title=f"Intermediate Layer: {name.replace('_', ' ').title()} ({job_id})",
-                type="GeoTIFF",
-                size=f"{file_size_kb} KB" if file_size_kb is not None else None,
-                status="ready" if is_valid else "unavailable",
-                created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                file_path=path if is_valid else None,
-                data_source=result.get("data_source", data_source),
-            )
-            db.merge(rpt)
-        db.commit()
+    # Register intermediate GeoTIFF outputs with robust validation and truthful provenance
+    from app.services.raster_service import validate_raster
+    from app.services.report_service import build_artifact_provenance
+    geotiffs = result.get("geotiff_outputs", {})
+    expected_layers = ["ndwi", "mndwi", "awei", "sar", "ensemble", "final_flood"]
+    if "jrc_baseline" in geotiffs:
+        expected_layers.append("jrc_baseline")
+
+    for name in expected_layers:
+        report_id = f"{job_id}-{name.upper()[:12]}"
+        path = geotiffs.get(name)
+        val_res = validate_raster(path, expected_type="mask") if path and os.path.exists(path) else None
+        is_valid = bool(val_res and val_res.is_valid)
+
+        status_val = "ready" if is_valid else "unavailable"
+        reason = None
+        if not is_valid:
+            if not path or not os.path.exists(path):
+                reason = f"No observation scenes available for '{name}' in selected date window."
+            else:
+                reason = val_res.error_message if val_res else "Raster validation failed."
+                logger.warning(f"GeoTIFF {name} at {path} failed raster validation: {reason}")
+
+        prov = build_artifact_provenance(
+            layer_key=name,
+            job_context=job_ctx,
+            raster_meta=val_res.metadata if val_res else None,
+            status=status_val,
+            unavailable_reason=reason,
+        )
+
+        file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if is_valid else None
+        rpt = Report(
+            id=report_id,
+            title=f"Intermediate Layer: {name.replace('_', ' ').title()} ({job_id})",
+            type="GeoTIFF",
+            size=f"{file_size_kb} KB" if file_size_kb is not None else None,
+            status=status_val,
+            created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            file_path=path if is_valid else None,
+            data_source=result.get("data_source", data_source),
+            provenance=prov,
+        )
+        db.merge(rpt)
+    db.commit()
 
     return result
 

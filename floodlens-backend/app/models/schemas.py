@@ -72,10 +72,15 @@ class DetectRequest(BaseModel):
 
         # Date mappings
         if "pre_flood_start" in data and data["pre_flood_start"]:
-            data["pre_date"] = str(data["pre_flood_start"])[:10]
-        elif "pre_flood_end" in data and data["pre_flood_end"]:
-            data["pre_date"] = str(data["pre_flood_end"])[:10]
+            data["pre_start"] = str(data["pre_flood_start"])[:10]
+            data.setdefault("pre_date", str(data["pre_flood_start"])[:10])
+        if "pre_flood_end" in data and data["pre_flood_end"]:
+            data["pre_end"] = str(data["pre_flood_end"])[:10]
+            data.setdefault("pre_date", str(data["pre_flood_end"])[:10])
 
+        if "post_flood_start" in data and data["post_flood_start"]:
+            data["post_start"] = str(data["post_flood_start"])[:10]
+            data.setdefault("post_date", str(data["post_flood_start"])[:10])
         if "post_flood_end" in data and data["post_flood_end"]:
             data["post_end"] = str(data["post_flood_end"])[:10]
             data.setdefault("post_date", str(data["post_flood_end"])[:10])
@@ -106,6 +111,45 @@ class DetectRequest(BaseModel):
             data.setdefault("aoi_lon", 83.4)
 
         return data
+
+    @model_validator(mode="after")
+    def validate_date_ranges(self):
+        import datetime
+
+        def parse_date(date_val: Any, field_name: str) -> datetime.date:
+            try:
+                return datetime.date.fromisoformat(str(date_val).strip()[:10])
+            except Exception as e:
+                raise ValueError(
+                    f"Field '{field_name}' must be a valid ISO date YYYY-MM-DD (received '{date_val}'): {e}"
+                )
+
+        d_pre = parse_date(self.pre_date, "pre_date")
+        d_post = parse_date(self.post_date, "post_date")
+
+        d_pre_start = parse_date(self.pre_start, "pre_start") if self.pre_start else d_pre
+        d_pre_end = parse_date(self.pre_end, "pre_end") if self.pre_end else d_pre
+        d_post_start = parse_date(self.post_start, "post_start") if self.post_start else d_post
+        d_post_end = parse_date(self.post_end, "post_end") if self.post_end else d_post
+
+        # Rejection of reversed ranges
+        if d_pre_start > d_pre_end:
+            raise ValueError(
+                f"Pre-flood start date ({d_pre_start}) cannot be after pre-flood end date ({d_pre_end})."
+            )
+        if d_post_start > d_post_end:
+            raise ValueError(
+                f"Post-flood start date ({d_post_start}) cannot be after post-flood end date ({d_post_end})."
+            )
+
+        # Enforce pre-event / post-event independence & prevent overlap
+        if d_pre_end >= d_post_start:
+            raise ValueError(
+                f"Pre-flood baseline period ({d_pre_start} to {d_pre_end}) must strictly precede "
+                f"post-flood observation period ({d_post_start} to {d_post_end}) without overlap."
+            )
+
+        return self
 
 
 class DetectResultResponse(BaseModel):
@@ -270,6 +314,7 @@ class ReportItem(BaseModel):
     status: str
     date: Optional[str] = None
     data_source: Optional[str] = None
+    provenance: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True

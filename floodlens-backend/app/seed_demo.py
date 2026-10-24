@@ -417,7 +417,7 @@ def seed_demo_data(db: Optional[Session] = None):
         db.add_all(acc_records)
         db.commit()
 
-        # 7. Seed Reports with actual on-disk file paths
+        # 7. Seed Reports with actual on-disk file paths and truthful provenance
         final_tif = geotiff_paths.get("final_flood_mask", os.path.join("outputs", "geotiff", DEMO_JOB_ID, "final_flood_mask.tif"))
         reports_seed = [
             {
@@ -427,6 +427,13 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": "3.8 MB",
                 "status": "ready",
                 "file_path": None,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "Synthetic Scenario Generator (Bihar Flood Simulation)",
+                    "processing_method": "Multi-criteria flood impact aggregation and demographic risk modeling",
+                    "spatial": {"crs": "EPSG:4326", "region": "North Bihar Basin"},
+                },
                 "created_at": (now_utc - datetime.timedelta(hours=1)).isoformat(),
             },
             {
@@ -436,6 +443,19 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": "42.1 MB",
                 "status": "ready",
                 "file_path": final_tif,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "Synthetic Earth Observation Simulation",
+                    "sensor": "Simulated Sentinel-2 MSI + Sentinel-1 SAR",
+                    "processing_method": "Synthetic 4-index majority vote ensemble with permanent water subtraction",
+                    "inputs_used": ["NDWI", "MNDWI", "AWEI", "SAR"],
+                    "spatial": {
+                        "crs": "EPSG:4326",
+                        "dimensions": {"width": 64, "height": 64},
+                        "resolution_m": 60.0,
+                    },
+                },
                 "created_at": (now_utc - datetime.timedelta(hours=1, minutes=5)).isoformat(),
             },
             {
@@ -445,6 +465,12 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": "5.2 MB",
                 "status": "ready",
                 "file_path": None,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "Synthetic OpenStreetMap Settlement Polygons",
+                    "processing_method": "Vector polygonization of classified inundation raster clusters",
+                },
                 "created_at": (now_utc - datetime.timedelta(hours=1, minutes=8)).isoformat(),
             },
             {
@@ -454,6 +480,12 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": "2.1 MB",
                 "status": "ready",
                 "file_path": None,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "Synthetic Baseline Comparison",
+                    "processing_method": "Multi-temporal pixel difference analysis against JRC permanent surface water",
+                },
                 "created_at": (now_utc - datetime.timedelta(hours=18)).isoformat(),
             },
             {
@@ -463,6 +495,13 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": "0.4 MB",
                 "status": "ready",
                 "file_path": csv_path,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "OpenStreetMap Administrative Settlements & Census",
+                    "processing_method": "Zonal intersection and settlement flood percentage calculation",
+                    "settlements_evaluated": len(DEMO_SETTLEMENTS),
+                },
                 "created_at": (now_utc - datetime.timedelta(hours=18)).isoformat(),
             },
             {
@@ -472,6 +511,13 @@ def seed_demo_data(db: Optional[Session] = None):
                 "size": None,
                 "status": "processing",
                 "file_path": None,
+                "data_source": "synthetic_demo",
+                "provenance": {
+                    "data_source": "synthetic_demo",
+                    "dataset": "Simulated Sentinel-1 C-band SAR",
+                    "status": "processing",
+                    "processing_method": "Synthetic radar calibration and speckle filtering simulation",
+                },
                 "created_at": (now_utc - datetime.timedelta(days=1)).isoformat(),
             },
         ]
@@ -484,6 +530,8 @@ def seed_demo_data(db: Optional[Session] = None):
                 existing_r.size = r_spec["size"]
                 existing_r.status = r_spec["status"]
                 existing_r.file_path = r_spec["file_path"]
+                existing_r.data_source = r_spec["data_source"]
+                existing_r.provenance = r_spec["provenance"]
                 existing_r.created_at = r_spec["created_at"]
             else:
                 db.add(Report(**r_spec))

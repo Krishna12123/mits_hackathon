@@ -1,21 +1,34 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
+        forest: {
+          DEFAULT: '#166534',
+          hover:   '#14532D',
+          light:   '#E5F2E8',
+        },
+        emerald: {
+          accent:  '#22A06B',
+        },
+        charcoal:  '#26332C',
+        'muted-green': '#647067',
+        'border-subtle': '#DCE5DD',
+        'sage-subtle': '#F1F5F1',
         brand: {
-          50:  '#eef9ff',
-          100: '#d8f1ff',
-          200: '#b9e8ff',
-          300: '#89daff',
-          400: '#51c3fe',
-          500: '#29a4fb',
-          600: '#1285f0',
-          700: '#0b6add',
-          800: '#1056b3',
-          900: '#134b8d',
-          950: '#0f2f57',
+          50:  '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22A06B',
+          600: '#166534',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532D',
+          950: '#052e16',
         },
         flood: {
           low:    '#22c55e',

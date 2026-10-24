@@ -19,9 +19,25 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    const msg = err.response?.data?.detail || err.message || 'Unknown error'
+    let msg = 'Unknown error'
+    const detail = err.response?.data?.detail
+    if (typeof detail === 'string') {
+      msg = detail
+    } else if (Array.isArray(detail)) {
+      msg = detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+    } else if (detail && typeof detail === 'object') {
+      msg = JSON.stringify(detail)
+    } else if (err.message) {
+      msg = err.message
+    }
+
     console.error('[FloodLens API]', msg)
-    return Promise.reject(new Error(msg))
+    const customError = new Error(msg)
+    if (err.response?.status) {
+      customError.status = err.response.status
+    }
+    customError.response = err.response
+    return Promise.reject(customError)
   }
 )
 

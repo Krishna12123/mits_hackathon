@@ -64,10 +64,10 @@ function PieCustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const item = payload[0]
     return (
-      <div className="bg-[#0b1326]/95 border border-[#4cd7f6]/25 rounded-xl px-3 py-2 text-xs shadow-xl backdrop-blur-md">
-        <p className="font-semibold text-white">{item.name}</p>
-        <p className="text-[#dae2fd]/90 mt-0.5">
-          Count: <span className="font-bold text-white font-mono">{item.value}</span>
+      <div className="bg-white/95 border border-[#D1D5DB] text-[#263238] shadow-xl rounded-xl px-3 py-2 text-xs backdrop-blur-md dark:bg-[#0b1326]/95 dark:border-[#4cd7f6]/25 dark:text-white">
+        <p className="font-semibold text-[#263238] dark:text-white">{item.name}</p>
+        <p className="text-[#374151] dark:text-[#dae2fd]/90 mt-0.5">
+          Count: <span className="font-bold text-[#166534] dark:text-white font-mono">{item.value}</span>
           {item.payload?.pct !== undefined ? ` (${item.payload.pct}%)` : ''}
         </p>
       </div>
@@ -81,13 +81,13 @@ function BarCustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const item = payload[0].payload
     return (
-      <div className="bg-[#0b1326]/95 border border-[#4cd7f6]/25 rounded-xl px-3 py-2 text-xs shadow-xl backdrop-blur-md">
-        <p className="font-semibold text-white">{item.name} Impact Tier</p>
-        <p className="text-[#dae2fd]/90 mt-0.5">
-          Settlements: <span className="font-bold text-white font-mono">{item.count}</span>
+      <div className="bg-white/95 border border-[#D1D5DB] text-[#263238] shadow-xl rounded-xl px-3 py-2 text-xs backdrop-blur-md dark:bg-[#0b1326]/95 dark:border-[#4cd7f6]/25 dark:text-white">
+        <p className="font-semibold text-[#263238] dark:text-white">{item.name} Impact Tier</p>
+        <p className="text-[#374151] dark:text-[#dae2fd]/90 mt-0.5">
+          Settlements: <span className="font-bold text-[#166534] dark:text-white font-mono">{item.count}</span>
         </p>
         {item.count > 0 && item.avgFloodedPct !== undefined && (
-          <p className="text-[#dae2fd]/80 text-[11px] mt-0.5">
+          <p className="text-[#6B7280] dark:text-[#dae2fd]/80 text-[11px] mt-0.5">
             Avg Flood Extent: {item.avgFloodedPct}%
           </p>
         )}
@@ -480,8 +480,8 @@ export default function Settlements() {
       {/* ── Page Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white font-display">Settlement Impact</h1>
-          <p className="text-[#dae2fd]/50 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#26332C] dark:text-white font-display">Settlement Impact</h1>
+          <p className="text-[#647067] dark:text-[#dae2fd]/50 text-sm mt-1">
             Spatial intersection of satellite flood extents with OpenStreetMap settlement footprints.
           </p>
         </div>
@@ -491,7 +491,7 @@ export default function Settlements() {
           {/* Printable Report */}
           <Link
             to="/dashboard/settlements/report"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#131b2e] border border-[#4cd7f6]/25 text-[#4cd7f6] hover:bg-[#4cd7f6]/10 active:bg-[#4cd7f6]/15 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#166534] text-[#166534] hover:bg-[#F1F5F1] dark:bg-[#131b2e] dark:border-[#4cd7f6]/25 dark:text-[#4cd7f6] shadow-sm transition-all"
             title="Open printable settlement impact summary report"
             aria-label="View Printable Settlement Impact Report"
           >
@@ -506,7 +506,7 @@ export default function Settlements() {
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm ${
               downloadSuccess
                 ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-[#4cd7f6] text-[#0b1326] hover:bg-[#4cd7f6]/90 active:bg-[#4cd7f6]/80 disabled:opacity-40 disabled:cursor-not-allowed'
+                : 'bg-[#166534] text-white hover:bg-[#14532D] active:bg-[#14532D] dark:bg-[#4cd7f6] dark:text-[#0b1326] disabled:opacity-40 disabled:cursor-not-allowed'
             }`}
             title={
               processedSettlements.length === 0
@@ -535,7 +535,7 @@ export default function Settlements() {
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
               geoJsonSuccess
                 ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                : 'bg-[#131b2e] border-[#4cd7f6]/25 text-[#4cd7f6] hover:bg-[#4cd7f6]/10 active:bg-[#4cd7f6]/15 disabled:opacity-40 disabled:cursor-not-allowed'
+                : 'bg-white border-[#D1D5DB] text-[#263238] hover:bg-[#F5F7F6] dark:bg-[#131b2e] dark:border-[#4cd7f6]/25 dark:text-[#4cd7f6] disabled:opacity-40 disabled:cursor-not-allowed'
             }`}
             title={
               !hasValidGeoJSON
@@ -561,7 +561,7 @@ export default function Settlements() {
           <button
             onClick={handleExportGeoTIFF}
             disabled={geoTiffLoading || loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#131b2e] border border-[#dae2fd]/20 text-[#dae2fd]/80 hover:text-white hover:border-[#dae2fd]/40 active:bg-[#dae2fd]/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#D1D5DB] text-[#263238] hover:bg-[#F5F7F6] dark:bg-[#131b2e] dark:border-[#dae2fd]/20 dark:text-[#dae2fd]/80 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             title="Download classified flood raster artifact (.tif) from backend processing"
             aria-label="Export GeoTIFF raster artifact"
           >
@@ -582,7 +582,7 @@ export default function Settlements() {
           <button
             onClick={fetchSettlements}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#131b2e] border border-[#4cd7f6]/20 text-[#4cd7f6] hover:bg-[#4cd7f6]/10 active:bg-[#4cd7f6]/15 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-[#D1D5DB] text-[#263238] hover:bg-[#F5F7F6] dark:bg-[#131b2e] dark:border-[#4cd7f6]/20 dark:text-[#4cd7f6] transition-colors disabled:opacity-50"
             aria-label="Refresh settlement data"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -659,17 +659,17 @@ export default function Settlements() {
         ].map(({ icon: Icon, label, value, unit }) => (
           <div
             key={label}
-            className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-4 flex items-center gap-3.5"
+            className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl p-4 flex items-center gap-3.5"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#4cd7f6]/10 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#E5F2E8] text-[#166534] border border-[#D1D5DB] dark:border-transparent dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] flex items-center justify-center shrink-0">
               <Icon className="w-5 h-5 text-[#4cd7f6]" />
             </div>
             <div>
-              <p className="text-xl font-bold text-white font-display">
+              <p className="text-xl font-bold text-[#26332C] dark:text-white font-display">
                 {value}
-                <span className="text-xs font-normal text-[#dae2fd]/40 ml-1.5">{unit}</span>
+                <span className="text-xs font-normal text-slate-400 dark:text-[#dae2fd]/40 ml-1.5">{unit}</span>
               </p>
-              <p className="text-xs text-[#dae2fd]/45 mt-0.5">{label}</p>
+              <p className="text-xs text-[#647067] dark:text-[#dae2fd]/45 mt-0.5">{label}</p>
             </div>
           </div>
         ))}
@@ -681,7 +681,7 @@ export default function Settlements() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-[#4cd7f6]" />
-            <h2 className="text-sm font-semibold text-white font-display">
+            <h2 className="text-sm font-semibold text-[#26332C] dark:text-white font-display">
               Settlement Impact Analytics
             </h2>
           </div>
@@ -696,11 +696,11 @@ export default function Settlements() {
         {/* Chart Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Chart 1: Affected vs. Safe Settlements (Pie/Donut) */}
-          <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5 space-y-4">
+          <div className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white font-display flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-[#4cd7f6]" />
+                <h3 className="text-sm font-semibold text-[#263238] dark:text-white font-display flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-[#166534] dark:text-[#4cd7f6]" />
                   Affected vs. Safe Settlements
                 </h3>
                 <p className="text-[11px] text-[#dae2fd]/40 mt-0.5">
@@ -746,16 +746,16 @@ export default function Settlements() {
                 </div>
 
                 {/* Custom Responsive Legend */}
-                <div className="flex items-center justify-center gap-6 pt-2 border-t border-[#4cd7f6]/8 flex-wrap">
+                <div className="flex items-center justify-center gap-6 pt-2 border-t border-[#D1D5DB] dark:border-[#4cd7f6]/8 flex-wrap">
                   {safetyDistribution.map(item => (
                     <div key={item.name} className="flex items-center gap-2">
                       <span
                         className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-xs text-[#dae2fd]/70">
+                      <span className="text-xs text-[#374151] dark:text-[#dae2fd]/70">
                         {item.name}:{' '}
-                        <strong className="text-white font-mono">{item.value}</strong>{' '}
+                        <strong className="text-[#263238] dark:text-white font-mono">{item.value}</strong>{' '}
                         <span className="text-[#dae2fd]/40">({item.pct}%)</span>
                       </span>
                     </div>
@@ -766,11 +766,11 @@ export default function Settlements() {
           </div>
 
           {/* Chart 2: Impact Tier Distribution (Bar Chart) */}
-          <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5 space-y-4">
+          <div className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white font-display flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-[#4cd7f6]" />
+                <h3 className="text-sm font-semibold text-[#263238] dark:text-white font-display flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-[#166534] dark:text-[#4cd7f6]" />
                   Impact Severity Distribution
                 </h3>
                 <p className="text-[11px] text-[#dae2fd]/40 mt-0.5">
@@ -825,7 +825,7 @@ export default function Settlements() {
                 </div>
 
                 {/* Sub-legend indicator */}
-                <div className="flex items-center justify-center gap-4 pt-2 border-t border-[#4cd7f6]/8 text-[11px] text-[#dae2fd]/40 flex-wrap">
+                <div className="flex items-center justify-center gap-4 pt-2 border-t border-[#D1D5DB] dark:border-[#4cd7f6]/8 text-[11px] text-[#dae2fd]/40 flex-wrap">
                   {severityDistribution.map(item => (
                     <span key={item.key} className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -840,23 +840,23 @@ export default function Settlements() {
       </div>
 
       {/* ── Controls: Search & Impact Filter ─────────────────────────── */}
-      <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-4 space-y-3">
+      <div className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl p-4 space-y-3">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search box */}
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#dae2fd]/35 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] dark:text-[#dae2fd]/35 pointer-events-none" />
             <input
               type="text"
               placeholder="Search settlement or district…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#0b1326] border border-[#4cd7f6]/15 rounded-xl text-sm text-[#dae2fd] pl-9 pr-3 py-2 focus:outline-none focus:border-[#4cd7f6]/40 focus:ring-1 focus:ring-[#4cd7f6]/20 placeholder-[#dae2fd]/25 transition-colors"
+              className="w-full bg-white border border-[#D1D5DB] rounded-xl text-sm text-[#26332C] placeholder:text-[#647067]/40 pl-9 pr-3 py-2 focus:outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534]/20 dark:bg-[#0b1326] dark:border-[#4cd7f6]/15 dark:text-[#dae2fd] transition-colors"
             />
           </div>
 
           {/* Filter Pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-[#dae2fd]/40 flex items-center gap-1 mr-1">
+            <span className="text-xs text-[#6B7280] dark:text-[#dae2fd]/40 flex items-center gap-1 mr-1">
               <Filter className="w-3.5 h-3.5" />
               Impact:
             </span>
@@ -869,8 +869,8 @@ export default function Settlements() {
                   className={[
                     'px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
                     active
-                      ? 'bg-[#4cd7f6] text-[#0b1326] font-semibold shadow-sm'
-                      : 'bg-[#0b1326] text-[#dae2fd]/60 border border-[#4cd7f6]/12 hover:border-[#4cd7f6]/30 hover:text-[#dae2fd]',
+                      ? 'bg-[#166534] text-white font-semibold shadow-sm dark:bg-[#4cd7f6] dark:text-[#0b1326]'
+                      : 'bg-white text-[#647067] border border-[#D1D5DB] hover:bg-[#F1F5F1] dark:bg-[#0b1326] dark:text-[#dae2fd]/60 dark:border-[#4cd7f6]/12',
                   ].join(' ')}
                 >
                   {label}
@@ -882,7 +882,7 @@ export default function Settlements() {
       </div>
 
       {/* ── Table Card ───────────────────────────────────────────────── */}
-      <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl overflow-hidden shadow-lg">
+      <div className="bg-white border border-[#D1D5DB] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/10 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <Spinner size="md" label="Loading settlement records" />
@@ -893,7 +893,7 @@ export default function Settlements() {
             <div className="w-10 h-10 rounded-full bg-[#dae2fd]/5 flex items-center justify-center mx-auto text-[#dae2fd]/30">
               <MapPin className="w-5 h-5" />
             </div>
-            <p className="text-sm font-semibold text-white font-display">
+            <p className="text-sm font-semibold text-[#26332C] dark:text-white font-display">
               No settlements match your filters
             </p>
             <p className="text-xs text-[#dae2fd]/40 max-w-sm mx-auto">
@@ -915,20 +915,20 @@ export default function Settlements() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm min-w-[700px]">
               <thead>
-                <tr className="border-b border-[#4cd7f6]/10 bg-[#0b1326]/50">
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                <tr className="border-b border-[#D1D5DB] bg-[#F1F5F1] text-[#26332C] dark:border-[#4cd7f6]/10 dark:bg-[#0b1326]/50 dark:text-[#dae2fd]/60">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Settlement Name
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     District
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Total Area
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Flooded Area
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     <button
                       onClick={handleSortToggle}
                       className="inline-flex items-center gap-1.5 text-[#dae2fd]/70 hover:text-[#4cd7f6] transition-colors group focus:outline-none"
@@ -943,15 +943,15 @@ export default function Settlements() {
                       )}
                     </button>
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Impact Flag
                   </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[#dae2fd]/60 uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider">
                     Population
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#4cd7f6]/6">
+              <tbody className="divide-y divide-[#DCE5DD] dark:divide-[#4cd7f6]/6 text-[#26332C] dark:text-[#dae2fd]">
                 {processedSettlements.map((s, idx) => {
                   const totalArea = getTotalArea(s)
                   const floodedArea = getFloodedArea(s)
@@ -960,48 +960,48 @@ export default function Settlements() {
                   return (
                     <tr
                       key={s.id || idx}
-                      className="hover:bg-[#4cd7f6]/4 transition-colors duration-150"
+                      className="hover:bg-[#F5F7F6] dark:hover:bg-[#4cd7f6]/4 transition-colors duration-150"
                     >
                       {/* Settlement Name */}
-                      <td className="px-5 py-3.5 font-medium text-white">
+                      <td className="px-5 py-3.5 font-medium text-[#263238] dark:text-white">
                         {s.name}
                       </td>
 
                       {/* District */}
-                      <td className="px-5 py-3.5 text-[#dae2fd]/70 text-xs">
+                      <td className="px-5 py-3.5 text-[#374151] dark:text-[#dae2fd]/70 text-xs">
                         {s.district}
                       </td>
 
                       {/* Total Area */}
-                      <td className="px-5 py-3.5 text-[#dae2fd]/70 font-mono text-xs">
+                      <td className="px-5 py-3.5 text-[#374151] dark:text-[#dae2fd]/70 font-mono text-xs">
                         {totalArea !== null ? `${totalArea} km²` : '—'}
                       </td>
 
                       {/* Flooded Area */}
-                      <td className="px-5 py-3.5 text-[#dae2fd]/85 font-mono text-xs">
+                      <td className="px-5 py-3.5 text-[#263238] dark:text-[#dae2fd]/85 font-mono text-xs font-semibold">
                         {floodedArea !== null ? `${floodedArea} km²` : '—'}
                       </td>
 
                       {/* Flood-affected Percentage with bar */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-20 bg-[#0b1326] rounded-full h-1.5 overflow-hidden border border-[#4cd7f6]/10">
+                          <div className="w-20 bg-[#F5F7F6] dark:bg-[#0b1326] rounded-full h-1.5 overflow-hidden border border-[#D1D5DB] dark:border-[#4cd7f6]/10">
                             <div
                               className={`h-full rounded-full transition-all duration-300 ${
                                 s.severity === 'severe'
-                                  ? 'bg-purple-400'
+                                  ? 'bg-purple-600 dark:bg-purple-400'
                                   : s.severity === 'high'
-                                    ? 'bg-red-400'
+                                    ? 'bg-red-600 dark:bg-red-400'
                                     : s.severity === 'medium'
-                                      ? 'bg-yellow-400'
+                                      ? 'bg-amber-500 dark:bg-yellow-400'
                                       : s.severity === 'safe'
-                                        ? 'bg-cyan-400'
-                                        : 'bg-green-400'
+                                        ? 'bg-emerald-500 dark:bg-cyan-400'
+                                        : 'bg-green-600 dark:bg-green-400'
                               }`}
                               style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
                             />
                           </div>
-                          <span className="font-mono text-xs font-semibold text-white">
+                          <span className="font-mono text-xs font-semibold text-[#263238] dark:text-white">
                             {pct}%
                           </span>
                         </div>
@@ -1013,7 +1013,7 @@ export default function Settlements() {
                       </td>
 
                       {/* Population */}
-                      <td className="px-5 py-3.5 text-[#dae2fd]/70 text-xs">
+                      <td className="px-5 py-3.5 text-[#374151] dark:text-[#dae2fd]/70 text-xs">
                         {s.population ? s.population.toLocaleString() : '—'}
                       </td>
                     </tr>
@@ -1025,7 +1025,7 @@ export default function Settlements() {
         )}
 
         {/* Footer row */}
-        <div className="px-5 py-3 border-t border-[#4cd7f6]/10 bg-[#0b1326]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#dae2fd]/40">
+        <div className="px-5 py-3 border-t border-[#D1D5DB] bg-[#F5F7F6] dark:border-[#4cd7f6]/10 dark:bg-[#0b1326]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#6B7280] dark:text-[#dae2fd]/40">
           <span>
             Showing {processedSettlements.length} of {settlements.length} settlements · CSV & GeoJSON export reflects active view
           </span>
