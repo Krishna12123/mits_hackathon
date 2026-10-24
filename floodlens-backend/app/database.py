@@ -61,6 +61,8 @@ def init_db():
             "ALTER TABLE flood_jobs ADD COLUMN permanent_water_km2 FLOAT",
             "ALTER TABLE flood_jobs ADD COLUMN total_water_km2 FLOAT",
             "ALTER TABLE flood_jobs ADD COLUMN min_votes INTEGER DEFAULT 2",
+            "ALTER TABLE flood_jobs ADD COLUMN data_source VARCHAR(32)",
+            "ALTER TABLE reports ADD COLUMN data_source VARCHAR(32)",
             "ALTER TABLE settlements ADD COLUMN total_area_km2 FLOAT",
             "ALTER TABLE settlements ADD COLUMN flooded_area_km2 FLOAT",
             "ALTER TABLE settlements ADD COLUMN latitude FLOAT",

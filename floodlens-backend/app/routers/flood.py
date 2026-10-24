@@ -169,6 +169,7 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
             status="ready",
             created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             file_path=csv_path,
+            data_source=result.get("data_source", data_source),
         )
         db.merge(csv_rpt)
         db.commit()
@@ -179,14 +180,17 @@ def execute_pipeline_sync(job_id: str, req_data: dict, db: Session) -> dict:
     if result.get("geotiff_outputs"):
         for name, path in result["geotiff_outputs"].items():
             report_id = f"{job_id}-{name.upper()[:12]}"
-            file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if os.path.exists(path) else 3.8
+            is_valid = bool(path and os.path.exists(path) and os.path.getsize(path) > 0)
+            file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if is_valid else None
             rpt = Report(
                 id=report_id,
                 title=f"Intermediate Layer: {name.replace('_', ' ').title()} ({job_id})",
                 type="GeoTIFF",
-                size=f"{file_size_kb} KB",
-                status="ready",
+                size=f"{file_size_kb} KB" if file_size_kb is not None else None,
+                status="ready" if is_valid else "unavailable",
                 created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                file_path=path if is_valid else None,
+                data_source=result.get("data_source", data_source),
             )
             db.merge(rpt)
         db.commit()

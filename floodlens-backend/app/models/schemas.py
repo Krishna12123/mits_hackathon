@@ -85,7 +85,6 @@ class DetectRequest(BaseModel):
         # Mode mapping
         if "run_mode" in data and not data.get("mode"):
             data["mode"] = str(data["run_mode"]).lower()
->>>>>>>>> Temporary merge branch 2
 
         # Indices mapping
         if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
@@ -270,6 +269,7 @@ class ReportItem(BaseModel):
     size: Optional[str] = None
     status: str
     date: Optional[str] = None
+    data_source: Optional[str] = None
 
     class Config:
         from_attributes = True

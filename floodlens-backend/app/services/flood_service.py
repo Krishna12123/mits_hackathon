@@ -2,10 +2,19 @@ import os
 import math
 import logging
 import datetime
+import urllib.request
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-import ee
-import httpx
+
+try:
+    import ee
+except ImportError:
+    ee = None
+
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +37,93 @@ def normalize_date_window(start: str, end: str, default_span_days: int = 14) -> 
 
     inclusive_end = e_date + datetime.timedelta(days=1)
     return s_date.isoformat(), inclusive_end.isoformat()
->>>>>>>>> Temporary merge branch 2
+
+
+def validate_geotiff_file(filepath: Path) -> bool:
+    """
+    Validates that a downloaded file is a genuine GeoTIFF:
+    1. File exists on disk.
+    2. File size > 100 bytes (avoids empty or truncated streams).
+    3. TIFF magic header check: b'II*\x00' (little-endian) or b'MM\x00*' (big-endian).
+    """
+    try:
+        if not filepath.exists() or filepath.stat().st_size <= 100:
+            return False
+        with open(filepath, "rb") as f:
+            header = f.read(4)
+            if header in (b"II*\x00", b"MM\x00*"):
+                return True
+        return False
+    except Exception as e:
+        logger.warning(f"Validation failed for {filepath}: {e}")
+        return False
+
+
+def export_gee_raster(ee_image, aoi, output_path: Path, layer_name: str) -> bool:
+    """
+    Exports a single bounded Earth Engine raster layer to a GeoTIFF file.
+    Validates download and file integrity. Cleans up partial files on failure.
+    """
+    if ee is None:
+        logger.warning(f"Cannot export {layer_name}: Earth Engine is not available.")
+        return False
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = output_path.with_suffix(".tmp")
+
+    try:
+        url = ee_image.getDownloadURL({
+            "name": output_path.stem,
+            "crs": "EPSG:4326",
+            "scale": 60,
+            "region": aoi,
+            "format": "GEO_TIFF",
+        })
+
+        content = None
+        if httpx is not None:
+            try:
+                resp = httpx.get(url, timeout=45)
+                if resp.status_code == 200:
+                    content = resp.content
+                else:
+                    logger.warning(f"GEE download returned HTTP {resp.status_code} for {layer_name}")
+            except Exception as he:
+                logger.warning(f"httpx download failed for {layer_name} ({he}); falling back to urllib.")
+
+        if content is None:
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "FloodLens/1.0 (Earth Observation Pipeline)"},
+            )
+            with urllib.request.urlopen(req, timeout=45) as response:
+                if response.status == 200:
+                    content = response.read()
+                else:
+                    logger.warning(f"urllib download returned HTTP {response.status} for {layer_name}")
+
+        if not content:
+            logger.warning(f"No content retrieved for live {layer_name} GeoTIFF.")
+            return False
+
+        with open(temp_path, "wb") as f:
+            f.write(content)
+
+        if validate_geotiff_file(temp_path):
+            temp_path.replace(output_path)
+            logger.info(f"✅ Successfully exported and validated live GeoTIFF: {output_path}")
+            return True
+        else:
+            logger.warning(f"❌ Corrupt or non-TIFF output detected for {layer_name}; discarded.")
+            if temp_path.exists():
+                temp_path.unlink()
+            return False
+
+    except Exception as exc:
+        logger.warning(f"Live export failed for {layer_name}: {exc}")
+        if temp_path.exists():
+            temp_path.unlink()
+        return False
 
 
 CLOUD_LIMIT_PERCENT = 80
@@ -428,28 +523,40 @@ def detect_flood(
         except Exception as e:
             logger.warning(f"Could not vectorize GEE flood mask: {e}")
 
-    # Bounded GeoTIFF export (scaled to 60m to stay strictly within 10,000 pixels & 32MB limit)
+    # Bounded Live GeoTIFF exports (scaled to 60m to stay strictly within 10,000 pixels & 32MB limit)
     geotiff_outputs = {}
     if job_id and save_geotiffs:
-        job_dir = Path("outputs") / job_id
+        job_dir = Path("outputs/geotiff") / job_id
         job_dir.mkdir(parents=True, exist_ok=True)
-        try:
-            tif_url = new_water.unmask(0).toByte().getDownloadURL({
-                "name": f"{job_id}_final_flood",
-                "crs": "EPSG:4326",
-                "scale": 60,
-                "region": aoi,
-                "format": "GEO_TIFF",
-            })
-            tif_path = job_dir / "final_flood_mask.tif"
-            resp = httpx.get(tif_url, timeout=45)
-            if resp.status_code == 200:
-                with open(tif_path, "wb") as f:
-                    f.write(resp.content)
-                geotiff_outputs["final_flood"] = str(tif_path)
-                logger.info(f"Saved GEE classified GeoTIFF to {tif_path}")
-        except Exception as e:
-            logger.warning(f"Could not download GEE GeoTIFF for {job_id}: {e}")
+
+        # 1. Optical Index Masks on the compatible 20m grid
+        ndwi_bin = post.select("NDWI").gt(active_thresh["NDWI"])
+        mndwi_bin = post.select("MNDWI").gt(active_thresh["MNDWI"])
+        awei_bin = post.select("AWEI").gt(active_thresh["AWEI"])
+
+        ndwi_mask = ndwi_bin.And(post_valid).rename("ndwi_water").unmask(0).toByte()
+        mndwi_mask = mndwi_bin.And(post_valid).rename("mndwi_water").unmask(0).toByte()
+        awei_mask = awei_bin.And(post_valid).rename("awei_water").unmask(0).toByte()
+
+        # 2. Ensemble Mask (Optical consensus: majority agreement >= 2 out of 3 indices)
+        votes = ndwi_bin.add(mndwi_bin).add(awei_bin)
+        ensemble_mask = votes.gte(2).And(post_valid).rename("ensemble_water").unmask(0).toByte()
+
+        # 3. Final Inundation Mask (Change detection: new water excluding pre-flood baseline)
+        final_flood_mask = new_water.rename("final_flood").unmask(0).toByte()
+
+        optical_layers = {
+            "ndwi": (ndwi_mask, "ndwi_mask.tif"),
+            "mndwi": (mndwi_mask, "mndwi_mask.tif"),
+            "awei": (awei_mask, "awei_mask.tif"),
+            "ensemble": (ensemble_mask, "ensemble_mask.tif"),
+            "final_flood": (final_flood_mask, "final_flood_mask.tif"),
+        }
+
+        for layer_key, (mask_img, filename) in optical_layers.items():
+            dest_file = job_dir / filename
+            if export_gee_raster(mask_img, aoi, dest_file, layer_key):
+                geotiff_outputs[layer_key] = str(dest_file)
 
     return {
         "status": "analysis_complete",

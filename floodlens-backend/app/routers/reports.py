@@ -32,6 +32,7 @@ async def list_reports(db: Session = Depends(get_db)):
             size=r.size,
             status=r.status,
             date=r.created_at,
+            data_source=r.data_source,
         )
         for r in reports
     ]
@@ -65,8 +66,10 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status != "ready":
+    if report.status == "processing":
         raise HTTPException(status_code=202, detail="Report generation in progress")
+    if report.status in ("failed", "unavailable"):
+        raise HTTPException(status_code=404, detail=f"Artifact unavailable (status: {report.status})")
 
     # If JSON description is explicitly requested
     if as_json:
@@ -76,6 +79,7 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
             "type": report.type,
             "download_url": f"/api/reports/{report.id}/download",
             "message": f"Artifact ready for download ({report.size or 'N/A'})",
+            "data_source": report.data_source,
         }
 
     # Handle CSV reports
@@ -89,7 +93,7 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
         )
 
     # Handle local file artifact if available
-    if report.file_path and os.path.exists(report.file_path):
+    if report.file_path and os.path.exists(report.file_path) and os.path.getsize(report.file_path) > 0:
         filename = os.path.basename(report.file_path)
         media_type = "image/tiff" if report.type.upper() == "GEOTIFF" else "application/octet-stream"
         return FileResponse(
@@ -98,10 +102,14 @@ async def download_report(report_id: str, as_json: bool = False, db: Session = D
             media_type=media_type,
         )
 
-    # Fallback to simulated artifact content or metadata
-    sample_content = f"FloodLens Artifact: {report.title}\nReport ID: {report.id}\nType: {report.type}\nStatus: {report.status}\n"
-    return Response(
-        content=sample_content,
-        media_type="text/plain",
-        headers={"Content-Disposition": f'attachment; filename="{report.id}.txt"'},
-    )
+    # Preserve legacy demonstration text downloads strictly for seeded demo reports (RPT-*)
+    if report_id.startswith("RPT-") or report.data_source == "synthetic_demo":
+        sample_content = f"FloodLens Artifact: {report.title}\nReport ID: {report.id}\nType: {report.type}\nStatus: {report.status}\n"
+        return Response(
+            content=sample_content,
+            media_type="text/plain",
+            headers={"Content-Disposition": f'attachment; filename="{report.id}.txt"'},
+        )
+
+    # For live jobs where file is missing from disk, do not fabricate an artifact
+    raise HTTPException(status_code=404, detail=f"Artifact file for {report.id} was not found on storage")
