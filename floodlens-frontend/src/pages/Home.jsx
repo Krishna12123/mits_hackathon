@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import {
   Satellite, MapPin, Layers, BarChart3, ChevronRight,
   Globe2, Building2, Activity, ArrowRight, CheckCircle2,
-  Search, GitCompare, Network,
+  Search, GitCompare, Network, LayoutDashboard,
 } from 'lucide-react'
 
 // ─── Satellite Flood Map SVG ─────────────────────────────────────────────────
@@ -290,18 +290,18 @@ export default function Home() {
 
             {/* Left — copy */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#4cd7f6]/8 border border-[#4cd7f6]/20 text-[#4cd7f6] text-xs font-medium mb-7">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E5F2E8] border border-[#DCE5DD] text-[#166534] dark:bg-[#4cd7f6]/8 dark:border-[#4cd7f6]/20 dark:text-[#4cd7f6] text-xs font-medium mb-7">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#4cd7f6] animate-pulse" />
                 Satellite-Based Flood Intelligence · Nepal Terai
               </div>
 
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-[3.75rem] xl:text-[4rem] font-bold text-white leading-[1.08] tracking-tight mb-6">
+              <h1 className="font-display text-5xl sm:text-6xl lg:text-[3.75rem] xl:text-[4rem] font-bold text-[#26332C] dark:text-white leading-[1.08] tracking-tight mb-6">
                 See Floods<br />
-                <span className="text-[#4cd7f6]">Before They</span><br />
+                <span className="text-[#166534] dark:text-[#4cd7f6]">Before They</span><br />
                 Spread.
               </h1>
 
-              <p className="text-[#dae2fd]/65 text-lg leading-relaxed mb-9 max-w-[480px]">
+              <p className="text-[#647067] dark:text-[#dae2fd]/65 text-lg leading-relaxed mb-9 max-w-[480px]">
                 FloodLens uses Sentinel-1 SAR satellite imagery and Google Earth Engine to map
                 flood extent and assess settlement impact across Nepal's Terai region — processed
                 on-demand, district by district.
@@ -310,14 +310,21 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/analysis"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#4cd7f6] text-[#0b1326] font-semibold text-sm rounded-xl hover:bg-[#4cd7f6]/90 active:bg-[#4cd7f6]/80 transition-all duration-150"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#166534] hover:bg-[#14532D] text-white font-semibold text-sm rounded-xl transition-all duration-150 shadow-sm"
                 >
                   Start Flood Analysis
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-[#F1F5F1] text-[#166534] border border-[#166534] font-semibold text-sm rounded-xl transition-all duration-150 shadow-sm"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Go to Dashboard
+                </Link>
                 <a
                   href="#how-it-works"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#4cd7f6]/25 text-[#dae2fd]/75 font-medium text-sm rounded-xl hover:border-[#4cd7f6]/50 hover:text-[#dae2fd] transition-all duration-150"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#DCE5DD] text-[#647067] font-medium text-sm rounded-xl hover:border-[#166534] hover:text-[#26332C] transition-all duration-150"
                 >
                   How It Works
                   <ChevronRight className="w-4 h-4" />
@@ -362,13 +369,13 @@ export default function Home() {
       </section>
 
       {/* ── How It Works ────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0d1629]">
+      <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#F1F5F1] dark:bg-[#0d1629] border-y border-[#DCE5DD] dark:border-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-[#4cd7f6] text-xs font-semibold uppercase tracking-[0.18em] mb-3">
+            <p className="text-[#166534] dark:text-[#4cd7f6] text-xs font-semibold uppercase tracking-[0.18em] mb-3">
               Methodology
             </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">How It Works</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#26332C] dark:text-white">How It Works</h2>
             <p className="text-[#dae2fd]/55 mt-4 max-w-lg mx-auto text-sm leading-relaxed">
               A four-step geospatial intelligence pipeline — from raw satellite imagery to
               actionable flood impact data.
@@ -413,10 +420,10 @@ export default function Home() {
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-[#4cd7f6] text-xs font-semibold uppercase tracking-[0.18em] mb-3">
+            <p className="text-[#166534] dark:text-[#4cd7f6] text-xs font-semibold uppercase tracking-[0.18em] mb-3">
               Capabilities
             </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#26332C] dark:text-white">
               What FloodLens Provides
             </h2>
             <p className="text-[#dae2fd]/55 mt-4 max-w-lg mx-auto text-sm leading-relaxed">
@@ -445,28 +452,37 @@ export default function Home() {
       </section>
 
       {/* ── CTA band ─────────────────────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0d1629]">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#F1F5F1] dark:bg-[#0d1629] border-y border-[#DCE5DD] dark:border-transparent">
         <div className="max-w-2xl mx-auto text-center">
-          <MapPin className="w-8 h-8 text-[#4cd7f6]/40 mx-auto mb-5" />
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
+          <MapPin className="w-8 h-8 text-[#166534] dark:text-[#4cd7f6]/40 mx-auto mb-5" />
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#26332C] dark:text-white mb-4">
             Ready to analyse a flood event?
           </h2>
-          <p className="text-[#dae2fd]/55 text-sm leading-relaxed mb-8">
+          <p className="text-[#647067] dark:text-[#dae2fd]/55 text-sm leading-relaxed mb-8">
             Open the Flood Analysis dashboard to run satellite-based detection on any district
             across Nepal's Terai region.
           </p>
-          <Link
-            to="/analysis"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#4cd7f6] text-[#0b1326] font-bold text-sm rounded-xl hover:bg-[#4cd7f6]/90 active:bg-[#4cd7f6]/80 transition-all duration-150"
-          >
-            Open Flood Analysis Dashboard
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white hover:bg-[#F1F5F1] text-[#166534] border border-[#166534] font-semibold text-sm rounded-xl transition-all duration-150 shadow-sm"
+            >
+              <LayoutDashboard className="w-4 h-4 text-[#4cd7f6]" />
+              Go to Dashboard
+            </Link>
+            <Link
+              to="/analysis"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#166534] hover:bg-[#14532D] text-white font-bold text-sm rounded-xl transition-all duration-150 shadow-sm"
+            >
+              Start Flood Analysis
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer id="about" className="pt-14 pb-8 px-4 sm:px-6 lg:px-8 border-t border-[#4cd7f6]/10">
+      <footer id="about" className="pt-14 pb-8 px-4 sm:px-6 lg:px-8 bg-white dark:bg-transparent border-t border-[#DCE5DD] dark:border-[#4cd7f6]/10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
 
@@ -476,7 +492,7 @@ export default function Home() {
                 <div className="w-8 h-8 rounded-lg bg-[#4cd7f6]/10 border border-[#4cd7f6]/25 flex items-center justify-center">
                   <Satellite className="w-4 h-4 text-[#4cd7f6]" />
                 </div>
-                <span className="text-white font-bold font-display">FloodLens</span>
+                <span className="text-[#26332C] dark:text-white font-bold font-display">FloodLens</span>
               </div>
               <p className="text-[#dae2fd]/45 text-sm leading-relaxed">
                 Satellite-based flood detection and settlement impact assessment platform
@@ -489,17 +505,18 @@ export default function Home() {
 
             {/* Navigation column */}
             <div>
-              <p className="text-white text-sm font-semibold font-display mb-4">Navigation</p>
+              <p className="text-[#26332C] dark:text-white text-sm font-semibold font-display mb-4">Navigation</p>
               <ul className="space-y-2.5">
                 {[
                   { label: 'Home',           to: '/'         },
+                  { label: 'Dashboard',      to: '/dashboard'},
                   { label: 'Flood Analysis', to: '/analysis' },
                   { label: 'About',          to: '/about'    },
                 ].map(({ label, to }) => (
                   <li key={label}>
                     <Link
                       to={to}
-                      className="text-[#dae2fd]/45 text-sm hover:text-[#4cd7f6] transition-colors duration-150"
+                      className="text-[#647067] hover:text-[#166534] dark:text-[#dae2fd]/45 dark:hover:text-[#4cd7f6] text-sm transition-colors duration-150"
                     >
                       {label}
                     </Link>
@@ -510,7 +527,7 @@ export default function Home() {
 
             {/* Platform column */}
             <div>
-              <p className="text-white text-sm font-semibold font-display mb-4">Platform</p>
+              <p className="text-[#26332C] dark:text-white text-sm font-semibold font-display mb-4">Platform</p>
               <ul className="space-y-2.5">
                 {[
                   'Sentinel-1 SAR Imagery',
@@ -519,7 +536,7 @@ export default function Home() {
                   'OpenStreetMap Integration',
                   'Nepal Terai Coverage',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-[#dae2fd]/45 text-sm">
+                  <li key={item} className="flex items-center gap-2 text-[#647067] dark:text-[#dae2fd]/45 text-sm">
                     <span className="w-1 h-1 rounded-full bg-[#4cd7f6]/45 shrink-0" />
                     {item}
                   </li>

@@ -19,6 +19,7 @@ import {
   fetchResults,
   classifyError,
   errorMessage,
+  resolveErrorMessage,
 } from '../services/floodAnalysis'
 import { accuracyAPI } from '../services/api'
 
@@ -132,8 +133,7 @@ export function useFloodAnalysis() {
       // Persist for retune() to use
       lastJobIdRef.current = jobId
     } catch (err) {
-      const cls = classifyError(err)
-      setError(errorMessage(cls))
+      setError(resolveErrorMessage(err))
       setStatus('failed')
       return
     }
@@ -162,8 +162,7 @@ export function useFloodAnalysis() {
             const resultData = await fetchResults(jobId)
             setResults(resultData)
           } catch (resultErr) {
-            const cls = classifyError(resultErr)
-            setError(errorMessage(cls))
+            setError(resolveErrorMessage(resultErr))
             setStatus('failed')
           }
         } else if (uiStage === 'failed') {
@@ -178,8 +177,7 @@ export function useFloodAnalysis() {
         }
       } catch (pollErr) {
         stopPolling()
-        const cls = classifyError(pollErr)
-        setError(errorMessage(cls))
+        setError(resolveErrorMessage(pollErr))
         setStatus('failed')
       }
     }, POLL_INTERVAL_MS)
@@ -218,8 +216,7 @@ export function useFloodAnalysis() {
       setResults(response)
       setStatus('completed')
     } catch (err) {
-      const cls = classifyError(err)
-      setError(errorMessage(cls))
+      setError(resolveErrorMessage(err))
       setStatus('failed')
     }
   }, [stopPolling])

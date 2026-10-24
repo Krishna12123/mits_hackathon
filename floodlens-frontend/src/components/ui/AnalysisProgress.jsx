@@ -147,20 +147,20 @@ const RUNNING_KEYS = ['fetching', 'processing', 'detecting', 'calculating', 'ret
 function StepBubble({ done, active, index }) {
   if (done) {
     return (
-      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-green-500/15 text-green-400 border border-green-500/30 text-[10px] font-bold">
+      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-green-100 text-[#166534] border border-green-300 dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/30 text-[10px] font-bold">
         ✓
       </span>
     )
   }
   if (active) {
     return (
-      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-[#4cd7f6]/12 border border-[#4cd7f6]/40">
+      <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-[#E8F5E9] border border-[#166534] dark:bg-[#4cd7f6]/12 dark:border-[#4cd7f6]/40">
         <Spinner size="xs" label="Running" />
       </span>
     )
   }
   return (
-    <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-[#dae2fd]/4 text-[#dae2fd]/20 border border-[#dae2fd]/10 text-[10px] font-bold">
+    <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-[#F5F7F6] text-[#6B7280] border border-[#D1D5DB] dark:bg-[#dae2fd]/4 dark:text-[#dae2fd]/20 dark:border-[#dae2fd]/10 text-[10px] font-bold">
       {index + 1}
     </span>
   )
@@ -170,7 +170,7 @@ function StepBubble({ done, active, index }) {
 function StepConnector({ done }) {
   return (
     <div className="ml-[9px] w-px h-3 shrink-0"
-         style={{ background: done ? 'rgba(74,222,128,0.3)' : 'rgba(218,226,253,0.08)' }} />
+         style={{ background: done ? '#166534' : '#D1D5DB' }} />
   )
 }
 
@@ -184,6 +184,7 @@ export default function AnalysisProgress({
   supportsCancellation = false,
   onCancel             = null,
   className            = '',
+  onSwitchToDemo       = null,
 }) {
   const meta       = STATUS_META[status] ?? STATUS_META.idle
   const isRunning  = RUNNING_KEYS.includes(status)
@@ -202,16 +203,16 @@ export default function AnalysisProgress({
   return (
     <div
       className={[
-        'bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5',
+        'bg-white border border-[#D1D5DB] shadow-sm rounded-2xl p-5 dark:bg-[#131b2e] dark:border-[#4cd7f6]/10',
         className,
       ].join(' ')}
     >
       {/* ── Card header ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 mb-4">
-        <div className="w-7 h-7 rounded-lg bg-[#4cd7f6]/10 flex items-center justify-center shrink-0">
-          <Cpu className="w-3.5 h-3.5 text-[#4cd7f6]" />
+        <div className="w-7 h-7 rounded-lg bg-[#E8F5E9] border border-[#D1D5DB] dark:border-transparent dark:bg-[#4cd7f6]/10 flex items-center justify-center shrink-0">
+          <Cpu className="w-3.5 h-3.5 text-[#166534] dark:text-[#4cd7f6]" />
         </div>
-        <h2 className="text-white font-semibold text-sm font-display">Analysis Status</h2>
+        <h2 className="text-[#263238] dark:text-white font-semibold text-sm font-display">Analysis Status</h2>
       </div>
 
       {/* ── Status badge — live region for screen readers ─────────── */}
@@ -232,8 +233,8 @@ export default function AnalysisProgress({
 
         {/* Provenance Badge */}
         {dataSource === 'gee_live' && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#4cd7f6]/30 bg-[#4cd7f6]/10 text-[#4cd7f6] text-[11px] font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4cd7f6] animate-pulse" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#166534]/30 bg-[#E8F5E9] text-[#166534] dark:border-[#4cd7f6]/30 dark:bg-[#4cd7f6]/10 dark:text-[#4cd7f6] text-[11px] font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#166534] dark:bg-[#4cd7f6] animate-pulse" />
             Live Copernicus S2 SR
           </div>
         )}
@@ -290,15 +291,15 @@ export default function AnalysisProgress({
 
                   <div className="pb-3 min-w-0">
                     <p className={[
-                      'text-xs font-medium leading-tight',
-                      done    ? 'text-green-400'    :
-                      active  ? 'text-[#dae2fd]/90' :
-                                'text-[#dae2fd]/28',
+                      'text-xs font-semibold leading-tight',
+                      done    ? 'text-[#166534] dark:text-green-400' :
+                      active  ? 'text-[#263238] dark:text-[#dae2fd]/90' :
+                                'text-[#6B7280] dark:text-[#dae2fd]/28',
                     ].join(' ')}>
                       {isRetuning && active ? 'Refining Detection Mask' : stage.label}
                     </p>
                     {active && (
-                      <p className="text-[10px] text-[#dae2fd]/40 leading-relaxed mt-0.5">
+                      <p className="text-[10px] text-[#6B7280] dark:text-[#dae2fd]/40 leading-relaxed mt-0.5">
                         {isRetuning ? 'Refinement Running — Iterative Feedback Loop' : stage.description}
                       </p>
                     )}
@@ -312,10 +313,10 @@ export default function AnalysisProgress({
 
       {/* ── Completed note ───────────────────────────────────────── */}
       {isComplete && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/6 border border-green-500/15 mt-1">
-          <Info className="w-3.5 h-3.5 text-green-400/70 shrink-0 mt-0.5" aria-hidden="true" />
-          <p className="text-xs text-green-400/80 leading-relaxed">
-            Pipeline completed. Results are ready — no backend data is shown in this demo state.
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200 text-[#166534] dark:bg-green-500/6 dark:border-green-500/15 dark:text-green-400/80 mt-1">
+          <Info className="w-3.5 h-3.5 text-[#166534] dark:text-green-400/70 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-xs font-medium leading-relaxed">
+            Pipeline completed successfully. Detection results and impact metrics are ready.
           </p>
         </div>
       )}
@@ -329,6 +330,18 @@ export default function AnalysisProgress({
               {errorMessage ?? defaultError}
             </p>
           </div>
+
+          {onSwitchToDemo && (
+            <button
+              type="button"
+              onClick={onSwitchToDemo}
+              aria-label="Switch to Demo Mode"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#ffb95f]/10 border border-[#ffb95f]/30 text-[#ffb95f] text-sm font-semibold hover:bg-[#ffb95f]/20 hover:border-[#ffb95f]/50 active:bg-[#ffb95f]/30 transition-all duration-150"
+            >
+              <Satellite className="w-3.5 h-3.5" aria-hidden="true" />
+              Switch to Demo Mode
+            </button>
+          )}
 
           {onRetry && (
             <button
@@ -345,9 +358,9 @@ export default function AnalysisProgress({
 
       {/* ── Idle hint ────────────────────────────────────────────── */}
       {isIdle && (
-        <p className="text-xs text-[#dae2fd]/30 leading-relaxed mt-1">
+        <p className="text-xs text-[#6B7280] dark:text-[#dae2fd]/30 leading-relaxed mt-1">
           Configure region, date ranges, and satellite source — then click{' '}
-          <span className="text-[#4cd7f6]/70 font-medium">Run Flood Analysis</span>{' '}
+          <span className="text-[#166534] dark:text-[#4cd7f6]/70 font-semibold">Run Flood Analysis</span>{' '}
           to begin the pipeline.
         </p>
       )}

@@ -110,6 +110,28 @@ function formatDate(isoStr) {
   }
 }
 
+function ProvenanceBadge({ dataSource }) {
+  if (dataSource === 'gee_live') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border border-[#4cd7f6]/30 bg-[#4cd7f6]/10 text-[#4cd7f6]">
+        Live GEE
+      </span>
+    )
+  }
+  if (dataSource === 'synthetic_demo') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border border-[#ffb95f]/30 bg-[#ffb95f]/10 text-[#ffb95f]">
+        Demo Simulation
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border border-slate-500/30 bg-slate-500/10 text-slate-400">
+      Unknown Source
+    </span>
+  )
+}
+
 export default function Reports() {
   const [reports, setReports]               = useState([])
   const [loading, setLoading]               = useState(true)
@@ -209,7 +231,7 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-white">Reports &amp; Exports</h1>
+            <h1 className="text-2xl font-bold text-[#26332C] dark:text-white font-display">Reports &amp; Exports</h1>
             <span
               className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                 isDemoFallback
@@ -220,7 +242,7 @@ export default function Reports() {
               {isDemoFallback ? 'Demo Fallback' : 'Live Backend'}
             </span>
           </div>
-          <p className="text-gray-400 text-sm">
+          <p className="text-[#647067] dark:text-gray-400 text-sm">
             GeoTIFF • Shapefiles • PDF Impact Reports • CSV data
           </p>
         </div>
@@ -228,7 +250,7 @@ export default function Reports() {
         <button
           onClick={fetchReports}
           disabled={loading}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#131b2e] border border-[#4cd7f6]/20 text-[#4cd7f6] hover:bg-[#4cd7f6]/10 disabled:opacity-50 transition-all"
+          className="self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-[#166534] text-[#166534] hover:bg-[#F1F5F1] shadow-sm dark:bg-[#131b2e] dark:border-[#4cd7f6]/20 dark:text-[#4cd7f6] disabled:opacity-50 transition-all"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh Artifacts
@@ -300,7 +322,7 @@ export default function Reports() {
       {!loading && reports.length === 0 && (
         <div className="py-16 text-center card border-dashed">
           <FileText className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-white">No Reports Available</h3>
+          <h3 className="text-base font-bold text-[#26332C] dark:text-white">No Reports Available</h3>
           <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
             No report artifacts have been generated yet. Execute a detection job in the Configure panel to create downloadable layers and impact summaries.
           </p>
@@ -330,19 +352,20 @@ export default function Reports() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-white font-semibold text-sm truncate">{report.title}</h3>
-                    <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded border border-gray-700 font-mono text-[11px]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-[#26332C] dark:text-white font-semibold text-sm truncate">{report.title}</h3>
+                    <span className="text-xs text-[#26332C] bg-[#F1F5F1] border border-[#DCE5DD] dark:text-gray-400 dark:bg-gray-800 dark:border-gray-700 px-2 py-0.5 rounded font-mono text-[11px]">
                       {report.type}
                     </span>
+                    <ProvenanceBadge dataSource={report.data_source} />
                     <span className="text-[10px] text-gray-500 font-mono">
                       {report.id}
                     </span>
                   </div>
                   {report.description && (
-                    <p className="text-gray-400 text-xs mt-0.5 line-clamp-1">{report.description}</p>
+                    <p className="text-[#374151] dark:text-gray-400 text-xs mt-0.5 line-clamp-1">{report.description}</p>
                   )}
-                  <p className="text-gray-500 text-xs mt-1">
+                  <p className="text-[#6B7280] dark:text-gray-500 text-xs mt-1">
                     {formatDate(report.date || report.created_at)}
                     {report.source ? ` • ${report.source}` : ''}
                   </p>
@@ -351,7 +374,7 @@ export default function Reports() {
                 {/* Status + Action */}
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <p className="text-xs text-gray-400 font-mono">{report.size || '—'}</p>
+                    <p className="text-xs text-[#6B7280] dark:text-gray-400 font-mono">{report.size || '—'}</p>
                     {isReady ? (
                       <div className="flex items-center justify-end gap-1 text-green-400 text-xs mt-0.5">
                         <CheckCircle className="w-3 h-3" />
@@ -370,7 +393,7 @@ export default function Reports() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                       isReady && !downloadingId
                         ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm'
-                        : 'bg-gray-800 text-gray-600 cursor-not-allowed border border-gray-700'
+                        : 'bg-[#F5F7F6] text-[#6B7280] cursor-not-allowed border border-[#D1D5DB] dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700'
                     }`}
                   >
                     {isDownloading ? (
