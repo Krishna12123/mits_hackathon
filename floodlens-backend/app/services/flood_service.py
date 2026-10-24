@@ -18,22 +18,35 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def normalize_date_window(start: str, end: str, default_span_days: int = 14) -> tuple:
+def normalize_date_window(start: Union[str, datetime.date], end: Union[str, datetime.date], default_span_days: int = 14) -> Tuple[str, str]:
     """
-    Ensures date window is non-empty and end date is inclusive for GEE's half-open [start, end) filter.
+    Normalizes a user-facing date window [start, end] (both inclusive) to Earth Engine's
+    half-open query boundary [start, inclusive_end) in UTC.
+    
+    Validations:
+    - Rejects invalid date formats.
+    - Rejects reversed date ranges (start > end).
+    - Accurately computes inclusive_end = end + 1 day so imagery acquired on the end date
+      (up to 23:59:59.999Z) is included in Earth Engine collections.
     """
-    try:
-        s_date = datetime.date.fromisoformat(str(start)[:10])
-    except Exception:
-        s_date = datetime.date.today() - datetime.timedelta(days=default_span_days)
+    if isinstance(start, datetime.date):
+        s_date = start
+    else:
+        try:
+            s_date = datetime.date.fromisoformat(str(start).strip()[:10])
+        except Exception as e:
+            raise ValueError(f"Invalid start date format '{start}': {e}")
 
-    try:
-        e_date = datetime.date.fromisoformat(str(end)[:10])
-    except Exception:
-        e_date = s_date + datetime.timedelta(days=default_span_days)
+    if isinstance(end, datetime.date):
+        e_date = end
+    else:
+        try:
+            e_date = datetime.date.fromisoformat(str(end).strip()[:10])
+        except Exception as e:
+            raise ValueError(f"Invalid end date format '{end}': {e}")
 
-    if s_date >= e_date:
-        s_date = e_date - datetime.timedelta(days=default_span_days)
+    if s_date > e_date:
+        raise ValueError(f"Start date ({s_date}) cannot be after end date ({e_date}).")
 
     inclusive_end = e_date + datetime.timedelta(days=1)
     return s_date.isoformat(), inclusive_end.isoformat()
@@ -342,6 +355,16 @@ def detect_flood(
     # Normalize date ranges to ensure multi-day baseline and full-day inclusive end
     pre_s_norm, pre_e_norm = normalize_date_window(pre_start, pre_end, default_span_days=14)
     post_s_norm, post_e_norm = normalize_date_window(post_start, post_end, default_span_days=7)
+
+    # Prevent accidental overlap between pre-event baseline and post-event observation periods
+    if pre_e_norm > post_s_norm:
+        return {
+            "status": "invalid_date_range",
+            "message": (
+                f"Pre-flood baseline period ({pre_start} to {pre_end}) overlaps with "
+                f"post-flood observation period ({post_start} to {post_end}). Event periods must be independent."
+            ),
+        }
 
     pre_count, pre = build_composite(pre_s_norm, pre_e_norm)
     post_count, post = build_composite(post_s_norm, post_e_norm)

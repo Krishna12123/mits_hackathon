@@ -63,16 +63,32 @@ def build_artifact_provenance(
             "valid_data_coverage_pct": raster_meta.valid_coverage_pct,
         })
 
-    # Dates
+    # Dates with explicit timezone and GEE half-open query intervals in UTC
+    pre_start_u = job_context.get("pre_start") or job_context.get("pre_date", "2026-10-11")
+    pre_end_u = job_context.get("pre_end") or job_context.get("pre_date", "2026-10-11")
+    post_start_u = job_context.get("post_start") or job_context.get("post_date", "2026-10-19")
+    post_end_u = job_context.get("post_end") or job_context.get("post_date", "2026-10-19")
+
+    try:
+        pre_e_date = datetime.date.fromisoformat(str(pre_end_u)[:10])
+        pre_gee_end = (pre_e_date + datetime.timedelta(days=1)).isoformat()
+    except Exception:
+        pre_gee_end = str(pre_end_u)
+
+    try:
+        post_e_date = datetime.date.fromisoformat(str(post_end_u)[:10])
+        post_gee_end = (post_e_date + datetime.timedelta(days=1)).isoformat()
+    except Exception:
+        post_gee_end = str(post_end_u)
+
     dates_info = {
-        "pre_flood_window": [
-            job_context.get("pre_start") or job_context.get("pre_date", "2026-10-11"),
-            job_context.get("pre_end") or job_context.get("pre_date", "2026-10-11"),
-        ],
-        "post_flood_window": [
-            job_context.get("post_start") or job_context.get("post_date", "2026-10-19"),
-            job_context.get("post_end") or job_context.get("post_date", "2026-10-19"),
-        ],
+        "timezone": "UTC",
+        "pre_flood_window": [str(pre_start_u)[:10], str(pre_end_u)[:10]],
+        "post_flood_window": [str(post_start_u)[:10], str(post_end_u)[:10]],
+        "gee_query_intervals_utc": {
+            "pre_flood_half_open": [f"{str(pre_start_u)[:10]}T00:00:00Z", f"{pre_gee_end}T00:00:00Z"],
+            "post_flood_half_open": [f"{str(post_start_u)[:10]}T00:00:00Z", f"{post_gee_end}T00:00:00Z"],
+        },
     }
 
     otsu_thresh = job_context.get("otsu_thresholds", {})

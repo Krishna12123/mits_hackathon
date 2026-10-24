@@ -70,13 +70,24 @@ class Sentinel1SARService:
         """
         logger.info(f"Querying Sentinel-1 SAR: {start_date} to {end_date} at ({lat}, {lon})")
 
+        # Normalize end date for GEE's half-open [start, end) interval in UTC
+        import datetime
+        try:
+            s_d = datetime.date.fromisoformat(str(start_date)[:10])
+            e_d = datetime.date.fromisoformat(str(end_date)[:10])
+            gee_start = s_d.isoformat()
+            gee_end = (e_d + datetime.timedelta(days=1)).isoformat()
+        except Exception:
+            gee_start = str(start_date)
+            gee_end = str(end_date)
+
         if self.is_ee_initialized and ee is not None:
             try:
                 aoi = self.build_aoi_geometry(lat, lon, radius_km)
                 col = (
                     ee.ImageCollection(self.COLLECTION_ID)
                     .filterBounds(aoi)
-                    .filterDate(start_date, end_date)
+                    .filterDate(gee_start, gee_end)
                     .filter(ee.Filter.eq("instrumentMode", "IW"))
                     .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VV"))
                     .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
@@ -251,10 +262,31 @@ class Sentinel1SARService:
             }
 
         try:
+            import datetime
+            try:
+                s_d = datetime.date.fromisoformat(str(start_date)[:10])
+                e_d = datetime.date.fromisoformat(str(end_date)[:10])
+                if s_d > e_d:
+                    return {
+                        "status": "invalid_date_range",
+                        "scene_count": 0,
+                        "mask_image": None,
+                        "error": f"Start date ({s_d}) cannot be after end date ({e_d}).",
+                        "vv_threshold_db": vv_threshold_db,
+                        "polarizations": ["VV", "VH"],
+                        "instrument_mode": "IW",
+                        "collection": self.COLLECTION_ID,
+                    }
+                gee_start = s_d.isoformat()
+                gee_end = str(end_date) if str(end_date) > str(start_date) else (e_d + datetime.timedelta(days=1)).isoformat()
+            except Exception:
+                gee_start = str(start_date)
+                gee_end = str(end_date)
+
             col = (
                 ee.ImageCollection(self.COLLECTION_ID)
                 .filterBounds(aoi)
-                .filterDate(start_date, end_date)
+                .filterDate(gee_start, gee_end)
                 .filter(ee.Filter.eq("instrumentMode", "IW"))
                 .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VV"))
                 .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
