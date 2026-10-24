@@ -67,6 +67,8 @@ def init_db():
             "ALTER TABLE settlements ADD COLUMN flooded_area_km2 FLOAT",
             "ALTER TABLE settlements ADD COLUMN latitude FLOAT",
             "ALTER TABLE settlements ADD COLUMN longitude FLOAT",
+            "ALTER TABLE flood_jobs ADD COLUMN data_source VARCHAR(64) DEFAULT 'synthetic_demo'",
+            "ALTER TABLE reports ADD COLUMN data_source VARCHAR(64) DEFAULT 'synthetic_demo'",
         ]:
             try:
                 conn.execute(text(sql))
