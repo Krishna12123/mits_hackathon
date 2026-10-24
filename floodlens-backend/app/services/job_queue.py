@@ -6,7 +6,16 @@ WebSocket progress broadcasting, and optional Celery broker bridge.
 import os
 import asyncio
 import logging
-import datetime
+MAX_RETRIES = int(os.getenv("JOB_MAX_RETRIES", "3"))
+
+# Helper to identify authentication errors
+def _is_auth_error(exc: Exception) -> bool:
+    return isinstance(exc, ValueError) and "Earth Engine is not authenticated" in str(exc)
+
+class ResultValidationError(RuntimeError):
+    """Raised when the detection pipeline returns an incomplete/invalid result."""
+    pass
+
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 
@@ -261,6 +270,62 @@ class AsyncJobQueue:
             )
 
             # Generate and register Settlement CSV Report
+            db = SessionLocal()
+            try:
+                csv_path = generate_settlement_impact_csv(job_id)
+                csv_size = f"{round(os.path.getsize(csv_path) / 1024.0, 1)} KB" if os.path.exists(csv_path) else "0.4 MB"
+                csv_rpt = Report(
+                    id=f"{job_id}-CSV",
+                    title=f"Settlement Impact Report ({job_id})",
+                    type="CSV",
+                    size=csv_size,
+                    status="ready",
+                    created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    file_path=csv_path,
+                    data_source=result.get("data_source", data_source),
+                )
+                db.merge(csv_rpt)
+                # Register intermediate GeoTIFF outputs
+                if result.get("geotiff_outputs"):
+                    for name, path in result["geotiff_outputs"].items():
+                        report_id = f"{job_id}-{name.upper()[:12]}"
+                        is_valid = bool(path and os.path.exists(path) and os.path.getsize(path) > 0)
+                        file_size_kb = round(os.path.getsize(path) / 1024.0, 1) if is_valid else None
+                        rpt = Report(
+                            id=report_id,
+                            title=f"Intermediate Layer: {name.replace('_', ' ').title()} ({job_id})",
+                            type="GeoTIFF",
+                            size=f"{file_size_kb} KB" if file_size_kb is not None else None,
+                            status="ready" if is_valid else "unavailable",
+                            created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                            file_path=path if is_valid else None,
+                            data_source=result.get("data_source", data_source),
+                        )
+                        db.merge(rpt)
+                # Update Job record
+                job = db.query(Job).filter(Job.id == job_id).first()
+                if job:
+                    job.status = "completed"
+                    job.stage = "completed"
+                    job.progress = 100
+                    job.data_source = result.get("data_source", data_source)
+                    job.flood_extent_km2 = result["flood_extent_km2"]
+                    job.affected_districts = 3
+                    job.at_risk_population = int(result["flood_extent_km2"] * 4800)
+                    job.ndwi_score = result.get("otsu_thresholds", {}).get("NDWI", 0.74)
+                    job.result_geojson = result.get("geojson")
+                    db.commit()
+            except Exception as csv_err:
+                logger.error(f"CSV/Report generation failed for {job_id}: {csv_err}")
+                # Cleanup any partially created CSV
+                try:
+                    if os.path.exists(csv_path):
+                        os.remove(csv_path)
+                except Exception:
+                    pass
+                raise
+            finally:
+                db.close()
             db = SessionLocal()
             try:
                 csv_path = generate_settlement_impact_csv(job_id)

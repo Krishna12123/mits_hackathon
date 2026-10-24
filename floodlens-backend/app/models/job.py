@@ -10,6 +10,8 @@ class Job(Base):
     id = Column(String(32), primary_key=True, index=True)
     status = Column(String(32), default="queued", index=True)  # queued, running, completed, failed
     progress = Column(Integer, default=0)  # 0 to 100 percentage
+    attempts = Column(Integer, default=0)  # retry attempts
+    stage = Column(String(64), default=\"queued\")  # queued, data_ingestion, index_computation, change_detection, settlement_impact, completed, failed
     stage = Column(String(64), default="queued")  # queued, data_ingestion, index_computation, change_detection, settlement_impact, completed, failed
     satellite = Column(String(64), default="Sentinel-2")
     index = Column(String(32), default="NDWI")

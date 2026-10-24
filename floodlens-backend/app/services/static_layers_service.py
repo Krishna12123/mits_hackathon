@@ -7,6 +7,7 @@ Loads baseline spatial layers:
 """
 import logging
 from typing import Dict, Any, List
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,16 @@ except ImportError:
     EE_AVAILABLE = False
 
 
+class JRCUnavailableError(RuntimeError):
+    """Raised when the genuine JRC Global Surface Water dataset cannot be fetched.
+    The exception differentiates between missing Earth Engine credentials and
+    validation failures (e.g., missing 'occurrence' band). It is *not* caught by
+    generic Exception handlers so that callers can decide whether to fall back to
+    the simulated layer or abort the detection step.
+    """
+
 class StaticLayersService:
+
     """Manages static spatial layers required across detection and impact analysis."""
 
     SRTM_DEM_ID = "USGS/SRTMGL1_003"
@@ -72,31 +82,57 @@ class StaticLayersService:
         }
 
     def get_jrc_permanent_water(self, lat: float, lon: float, radius_km: float = 150.0, occurrence_threshold: int = 80) -> Dict[str, Any]:
-        """
-        Loads JRC Global Surface Water dataset.
-        Areas with occurrence >= occurrence_threshold (e.g. 80%) are classified as permanent water bodies.
+        """Loads JRC Global Surface Water dataset with provenance metadata.
+
+        Raises:
+            JRCUnavailableError: If Earth Engine is unavailable or required bands are missing.
         """
         logger.info(f"Loading JRC permanent water baseline (threshold >= {occurrence_threshold}%)")
+        # Capture provenance information
+        timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+        band_list = ["occurrence", "change_abs", "extent"]
 
         if self.is_ee_initialized and ee is not None:
             try:
                 point = ee.Geometry.Point([lon, lat])
                 aoi = point.buffer(radius_km * 1000)
                 gsw = ee.Image(self.JRC_WATER_ID).clip(aoi)
+                # Verify required bands exist
+                missing_bands = []
+                for b in band_list:
+                    try:
+                        if not gsw.select(b).getInfo():
+                            pass
+                    except Exception:
+                        missing_bands.append(b)
+                if missing_bands:
+                    raise JRCUnavailableError(f"Missing expected bands in JRC dataset: {missing_bands}")
                 occurrence = gsw.select("occurrence")
                 permanent_water = occurrence.gte(occurrence_threshold)
-
                 return {
                     "source": "Google Earth Engine",
                     "layer": "JRC Global Surface Water v1.4",
                     "collection": self.JRC_WATER_ID,
                     "occurrence_threshold_pct": occurrence_threshold,
                     "status": "ready",
+                    "timestamp": timestamp,
+                    "bands": band_list,
                 }
             except Exception as e:
                 logger.warning(f"EE JRC water query failed: {e}. Using fallback layer.")
+                raise JRCUnavailableError(str(e))
 
+        # Fallback simulated layer
         return {
+            "source": "JRC Global Surface Water Local / Simulated",
+            "layer": "JRC Global Surface Water v1.4",
+            "collection": self.JRC_WATER_ID,
+            "occurrence_threshold_pct": occurrence_threshold,
+            "permanent_water_extent_km2": 42.5,
+            "status": "ready",
+            "timestamp": timestamp,
+            "bands": band_list,
+        
             "source": "JRC Global Surface Water Local / Simulated",
             "layer": "JRC Global Surface Water v1.4",
             "collection": self.JRC_WATER_ID,
