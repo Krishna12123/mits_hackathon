@@ -1,24 +1,49 @@
-import { Bell, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Bell, RefreshCw, AlertTriangle, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../../context/ThemeContext'
 
 export default function TopBar() {
+  const { isDark, toggleTheme } = useTheme()
+
   return (
-    <header className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="w-4 h-4 text-yellow-400" />
-        <span className="text-sm text-yellow-300 font-medium">
+    <header className="h-14 bg-white border-b border-[#DCE5DD] dark:bg-[#111C2E] dark:border-[#29374B] flex items-center justify-between px-6 shrink-0 transition-colors duration-150">
+      <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#F1F5F1] border border-[#DCE5DD] dark:bg-amber-950/30 dark:border-amber-500/30">
+        <AlertTriangle className="w-3.5 h-3.5 text-[#166534] dark:text-yellow-400 shrink-0" />
+        <span className="text-xs text-[#166534] dark:text-yellow-300 font-medium">
           Active Flood Event · Bihar Region · Oct 19, 2026
         </span>
       </div>
-      <div className="flex items-center gap-3">
-        <button className="btn-secondary py-1.5 text-xs">
+
+      <div className="flex items-center gap-2.5">
+        <button className="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5">
           <RefreshCw className="w-3.5 h-3.5" />
-          Refresh Data
+          <span className="hidden sm:inline">Refresh Data</span>
         </button>
-        <button className="relative p-2 rounded-lg hover:bg-gray-800 transition-colors">
-          <Bell className="w-4 h-4 text-gray-400" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          className="p-2 rounded-lg border border-[#DCE5DD] bg-white hover:bg-[#F1F5F1] text-[#26332C] dark:border-[#29374B] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors shadow-sm"
+        >
+          {isDark ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-600" />
+          )}
         </button>
-        <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold text-white">
+
+        <button
+          type="button"
+          aria-label="View notifications"
+          className="relative p-2 rounded-lg border border-[#DCE5DD] bg-white hover:bg-[#F1F5F1] text-[#647067] dark:border-[#29374B] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors shadow-sm"
+        >
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full" />
+        </button>
+
+        <div className="w-8 h-8 rounded-full bg-[#166534] flex items-center justify-center text-xs font-bold text-white shadow-sm">
           KS
         </div>
       </div>

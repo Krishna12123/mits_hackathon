@@ -108,11 +108,27 @@ export async function fetchResults(jobId) {
 export function classifyError(error) {
   const status = error?.status ?? error?.response?.status
 
-  if (status === 400) return 'invalid_request'
+  if (status === 400 || status === 422) return 'invalid_request'
   if (status === 503) return 'imagery_unavailable'
   if (status >= 500) return 'server_error'
   if (!status) return 'network_error'
   return 'server_error'
+}
+
+/**
+ * Resolves a user-friendly error message, preferring explicit backend error details
+ * when available and falling back to error class descriptions for network/unspecified errors.
+ *
+ * @param {Error} error
+ * @returns {string}
+ */
+export function resolveErrorMessage(error) {
+  const cls = classifyError(error)
+  const isNetwork = cls === 'network_error' || (!error?.status && !error?.response)
+  if (!isNetwork && error?.message && error.message !== 'Unknown error') {
+    return error.message
+  }
+  return errorMessage(cls)
 }
 
 /**

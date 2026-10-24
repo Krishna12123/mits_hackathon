@@ -8,7 +8,7 @@ import Navbar from './Navbar'
  */
 export default function PublicLayout() {
   return (
-    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] font-sans">
+    <div className="min-h-screen bg-white text-slate-800 dark:bg-[#0b1326] dark:text-[#dae2fd] font-sans transition-colors duration-150">
       <Navbar />
       <Outlet />
     </div>
