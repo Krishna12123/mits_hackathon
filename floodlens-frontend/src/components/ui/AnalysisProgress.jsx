@@ -178,6 +178,7 @@ function StepConnector({ done }) {
 
 export default function AnalysisProgress({
   status               = 'idle',
+  dataSource           = null,
   errorMessage         = null,
   onRetry              = null,
   supportsCancellation = false,
@@ -214,10 +215,10 @@ export default function AnalysisProgress({
       </div>
 
       {/* ── Status badge — live region for screen readers ─────────── */}
-      <div aria-live="polite" aria-atomic="true">
+      <div aria-live="polite" aria-atomic="true" className="flex flex-wrap items-center gap-2 mb-4">
         <div
           className={[
-            'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border mb-4',
+            'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border',
             meta.bg, meta.ring,
           ].join(' ')}
         >
@@ -228,6 +229,25 @@ export default function AnalysisProgress({
           )}
           <span className={`text-xs font-semibold ${meta.color}`}>{meta.label}</span>
         </div>
+
+        {/* Provenance Badge */}
+        {dataSource === 'gee_live' && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#4cd7f6]/30 bg-[#4cd7f6]/10 text-[#4cd7f6] text-[11px] font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4cd7f6] animate-pulse" />
+            Live Copernicus S2 SR
+          </div>
+        )}
+        {dataSource === 'synthetic_demo' && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#ffb95f]/30 bg-[#ffb95f]/10 text-[#ffb95f] text-[11px] font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ffb95f]" />
+            Simulated Demo Scenario
+          </div>
+        )}
+        {dataSource === 'untracked' && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-500/30 bg-slate-500/10 text-slate-400 text-[11px] font-semibold">
+            Archive / Historical Run
+          </div>
+        )}
       </div>
 
       {/* Explicit description for retuning feedback loop */}

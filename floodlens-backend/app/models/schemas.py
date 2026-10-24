@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
 class DetectRequest(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
+    mode: str = Field(default="demo", description="demo or live")
     satellite: str = Field(default="Sentinel-2", description="Sentinel-2, Sentinel-1, or Landsat")
     index: str = Field(default="NDWI", description="NDWI, MNDWI, AWEI, or ALL")
     threshold: float = Field(default=0.3, ge=-1.0, le=1.0)
@@ -34,7 +35,11 @@ class DetectRequest(BaseModel):
     aoi_radius_km: int = Field(default=150, ge=1, le=1000)
     pre_date: str = Field(default="2026-10-11")
     post_date: str = Field(default="2026-10-19")
-    min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble (1-4)")
+    pre_start: Optional[str] = Field(default=None, description="Pre-flood window start date YYYY-MM-DD")
+    pre_end: Optional[str] = Field(default=None, description="Pre-flood window end date YYYY-MM-DD")
+    post_start: Optional[str] = Field(default=None, description="Post-flood window start date YYYY-MM-DD")
+    post_end: Optional[str] = Field(default=None, description="Post-flood window end date YYYY-MM-DD")
+    min_votes: int = Field(default=2, ge=1, le=4, description="Minimum index votes for majority ensemble 1-4")
     save_geotiff: bool = Field(default=True, description="Save intermediate GeoTIFF rasters")
     sync: bool = Field(default=False, description="Run synchronously and return mask immediately")
 
@@ -57,14 +62,24 @@ class DetectRequest(BaseModel):
 
         # Date mappings
         if "pre_flood_start" in data and data["pre_flood_start"]:
-            data["pre_date"] = str(data["pre_flood_start"])[:10]
-        elif "pre_flood_end" in data and data["pre_flood_end"]:
-            data["pre_date"] = str(data["pre_flood_end"])[:10]
+            data["pre_start"] = str(data["pre_flood_start"])[:10]
+        if "pre_flood_end" in data and data["pre_flood_end"]:
+            data["pre_end"] = str(data["pre_flood_end"])[:10]
+            data.setdefault("pre_date", str(data["pre_flood_end"])[:10])
+        elif "pre_start" in data and not data.get("pre_date"):
+            data["pre_date"] = data["pre_start"]
 
+        if "post_flood_start" in data and data["post_flood_start"]:
+            data["post_start"] = str(data["post_flood_start"])[:10]
         if "post_flood_end" in data and data["post_flood_end"]:
-            data["post_date"] = str(data["post_flood_end"])[:10]
-        elif "post_flood_start" in data and data["post_flood_start"]:
-            data["post_date"] = str(data["post_flood_start"])[:10]
+            data["post_end"] = str(data["post_flood_end"])[:10]
+            data.setdefault("post_date", str(data["post_flood_end"])[:10])
+        elif "post_start" in data and not data.get("post_date"):
+            data["post_date"] = data["post_start"]
+
+        # Mode mapping
+        if "run_mode" in data and not data.get("mode"):
+            data["mode"] = str(data["run_mode"]).lower()
 
         # Indices mapping
         if "indices" in data and isinstance(data["indices"], list) and data["indices"]:
@@ -91,6 +106,7 @@ class DetectRequest(BaseModel):
 class DetectResultResponse(BaseModel):
     job_id: str
     status: str
+    data_source: Optional[str] = None
     flood_extent_km2: float
     permanent_water_km2: float
     total_water_km2: float
@@ -104,6 +120,7 @@ class JobResponse(BaseModel):
     job_id: str
     jobId: Optional[str] = None
     status: str
+    data_source: Optional[str] = None
     message: Optional[str] = None
 
     @model_validator(mode="before")
@@ -121,6 +138,7 @@ class JobStatusResponse(BaseModel):
     job_id: str
     jobId: Optional[str] = None
     status: str
+    data_source: Optional[str] = None
     progress: int = 0
     stage: Optional[str] = None
     error_message: Optional[str] = None
@@ -150,6 +168,7 @@ class FloodSummaryResponse(BaseModel):
     ndwi_score: float
     satellite: str
     last_updated: str
+    data_source: Optional[str] = None
 
 
 # --- Live Dashboard Schemas ---

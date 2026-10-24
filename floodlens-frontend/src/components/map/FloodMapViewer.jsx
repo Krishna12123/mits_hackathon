@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
 import { useState } from 'react'
 import { Layers } from 'lucide-react'
 
-// Mock GeoJSON flood extent for demo
+// Mock GeoJSON flood extent for demonstration when real results are pending
 const mockFloodGeoJSON = {
   type: 'FeatureCollection',
   features: [
@@ -41,7 +41,8 @@ const severityColors = {
 }
 
 function floodStyle(feature) {
-  const color = severityColors[feature.properties.severity] || '#3b82f6'
+  const sev = feature?.properties?.severity?.toLowerCase()
+  const color = severityColors[sev] || '#3b82f6'
   return {
     fillColor: color,
     fillOpacity: 0.45,
@@ -63,16 +64,34 @@ function gapFillStyle() {
 }
 
 function onEachFeature(feature, layer) {
-  if (feature.properties) {
-    const { district, severity, area_km2 } = feature.properties
+  if (feature && feature.properties) {
+    const p = feature.properties
+    const district = p.district || (p.cluster_id ? `Inundation Zone #${p.cluster_id}` : 'Flood Extent Area')
+    const severity = p.severity || 'medium'
+    const area = p.area_km2 ?? p.area_sqkm ?? '—'
+    const conf = p.mean_confidence ? ` · Conf: ${Math.round(p.mean_confidence * 100)}%` : ''
     layer.bindPopup(`
       <div style="font-family:Inter,sans-serif;min-width:160px">
-        <p style="font-weight:700;margin:0 0 4px">${district}</p>
-        <p style="margin:0;color:#94a3b8;font-size:12px">Severity: <b style="color:#f87171">${severity}</b></p>
-        <p style="margin:0;color:#94a3b8;font-size:12px">Flood Area: ${area_km2} km²</p>
+        <p style="font-weight:700;margin:0 0 4px;color:#f8fafc">${district}</p>
+        <p style="margin:0;color:#94a3b8;font-size:12px">Severity: <b style="color:#f87171;text-transform:capitalize">${severity}</b>${conf}</p>
+        <p style="margin:0;color:#94a3b8;font-size:12px">Flood Area: ${area} km²</p>
       </div>
     `)
   }
+}
+
+/**
+ * Validates whether an incoming object is a well-formed GeoJSON FeatureCollection or Feature
+ */
+function isValidGeoJSON(data) {
+  if (!data || typeof data !== 'object') return false
+  if (data.type === 'FeatureCollection' && Array.isArray(data.features) && data.features.length > 0) {
+    return true
+  }
+  if (data.type === 'Feature' && data.geometry) {
+    return true
+  }
+  return false
 }
 
 /**
@@ -82,17 +101,21 @@ function onEachFeature(feature, layer) {
  *   height         — CSS height string (default '500px')
  *   showControls   — show flood layer toggle button
  *   showGapFill    — whether the SAR gap-fill toggle is visible
+ *   floodGeoJSON   — real GeoJSON from completed backend job; falls back to mock demo data if null
  *   gapFillGeoJSON — real GeoJSON from backend; if null, gap-fill layer is hidden
- *                    PENDING: confirm GeoJSON structure with backend team
  */
 export default function FloodMapViewer({
   height         = '500px',
   showControls   = true,
   showGapFill    = false,
+  floodGeoJSON   = null,
   gapFillGeoJSON = null,
 }) {
-  const [showFlood,    setShowFlood]    = useState(true)
-  const [gapFillOn,   setGapFillOn]    = useState(true)
+  const [showFlood, setShowFlood] = useState(true)
+  const [gapFillOn, setGapFillOn] = useState(true)
+
+  const hasRealFloodData = isValidGeoJSON(floodGeoJSON)
+  const activeFloodData  = hasRealFloodData ? floodGeoJSON : mockFloodGeoJSON
 
   return (
     <div className="relative rounded-xl overflow-hidden border border-gray-800" style={{ height }}>
@@ -107,20 +130,19 @@ export default function FloodMapViewer({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Flood extent layer (reference / real data when wired) */}
+        {/* Flood extent layer (real detection data when available, mock fallback otherwise) */}
         {showFlood && (
           <GeoJSON
-            key="flood-layer"
-            data={mockFloodGeoJSON}
+            key={hasRealFloodData ? `flood-real-${activeFloodData.features?.length || 1}` : 'flood-mock'}
+            data={activeFloodData}
             style={floodStyle}
             onEachFeature={onEachFeature}
           />
         )}
 
         {/* SAR gap-fill layer — only renders real GeoJSON from backend.
-            No fabricated gap-fill data is shown.
-            PENDING: confirm gapFillGeoJSON schema with backend team. */}
-        {showGapFill && gapFillOn && gapFillGeoJSON && (
+            No fabricated gap-fill data is shown. */}
+        {showGapFill && gapFillOn && gapFillGeoJSON && isValidGeoJSON(gapFillGeoJSON) && (
           <GeoJSON
             key="gap-fill-layer"
             data={gapFillGeoJSON}
@@ -131,13 +153,26 @@ export default function FloodMapViewer({
 
       {/* Legend */}
       <div className="absolute bottom-4 right-4 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-lg p-3 z-[1000]">
-        <p className="text-xs font-semibold text-gray-300 mb-2">Flood Severity</p>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <p className="text-xs font-semibold text-gray-300">Flood Severity</p>
+          <span
+            className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+              hasRealFloodData
+                ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+            }`}
+          >
+            {hasRealFloodData ? 'Live Mask' : 'Demo Data'}
+          </span>
+        </div>
+
         {Object.entries(severityColors).map(([level, color]) => (
           <div key={level} className="flex items-center gap-2 mb-1">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
             <span className="text-xs text-gray-400 capitalize">{level}</span>
           </div>
         ))}
+
         {/* Gap-fill legend entry — only shown when layer is active */}
         {showGapFill && gapFillGeoJSON && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-700">

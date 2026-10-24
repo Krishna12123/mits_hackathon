@@ -4,7 +4,12 @@ NAKSHATRA 2026 Aerospace Hackathon · Team Code Matrix
 """
 import os
 import uuid
-from fastapi import FastAPI, Depends
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -33,39 +38,90 @@ os.makedirs("outputs/geotiff", exist_ok=True)
 os.makedirs("outputs/reports", exist_ok=True)
 
 
+def init_earth_engine() -> dict:
+    """
+    Initializes Google Earth Engine securely using configured credentials.
+    Supports:
+      1. Service Account (EE_SERVICE_ACCOUNT_EMAIL, EE_SERVICE_ACCOUNT_KEY_FILE, EE_PROJECT_ID)
+      2. Application Default Credentials (ADC) with EE_PROJECT_ID when EE_USE_ADC is enabled.
+    If unconfigured or initialization fails, sets status to unavailable and preserves fallback mode.
+    Never exposes private key contents, tokens, or raw paths in logs or returns.
+    """
+    project_id = os.getenv("EE_PROJECT_ID", "floodlens-512416")
+    sa_email = os.getenv("EE_SERVICE_ACCOUNT_EMAIL")
+    sa_key_file = os.getenv("EE_SERVICE_ACCOUNT_KEY_FILE")
+    use_adc = os.getenv("EE_USE_ADC", "").lower() in ("1", "true", "yes")
+
+    try:
+        import ee
+    except ImportError:
+        print("[GEE] Earth Engine module (earthengine-api) is not installed. Live satellite processing unavailable.")
+        return {"authenticated": False, "mode": "none", "reason": "earthengine-api not installed"}
+
+    # Mode A: Explicit Service Account Configuration
+    if sa_key_file or sa_email:
+        if not sa_key_file:
+            print("[GEE] Config Error: EE_SERVICE_ACCOUNT_EMAIL provided without EE_SERVICE_ACCOUNT_KEY_FILE. GEE unavailable.")
+            return {"authenticated": False, "mode": "service_account", "reason": "Missing key file configuration"}
+
+        if not os.path.exists(sa_key_file):
+            print("[GEE] Config Error: Configured EE_SERVICE_ACCOUNT_KEY_FILE does not exist on disk. GEE unavailable.")
+            return {"authenticated": False, "mode": "service_account", "reason": "Key file not found on disk"}
+
+        try:
+            credentials = ee.ServiceAccountCredentials(sa_email, key_file=sa_key_file)
+            ee.Initialize(credentials=credentials, project=project_id)
+            print(f"[GEE] Initialized successfully via Service Account (project: {project_id}).")
+            return {"authenticated": True, "mode": "service_account", "project": project_id}
+        except Exception as e:
+            err_type = type(e).__name__
+            print(f"[GEE] Service Account initialization failed ({err_type}). Live satellite processing unavailable; retaining demo fallback.")
+            return {"authenticated": False, "mode": "service_account", "reason": f"Service account authentication failed: {err_type}"}
+
+    # Mode B: Application Default Credentials (ADC)
+    if use_adc:
+        try:
+            ee.Initialize(project=project_id)
+            print(f"[GEE] Initialized successfully via ADC (project: {project_id}).")
+            return {"authenticated": True, "mode": "adc", "project": project_id}
+        except Exception as e:
+            err_type = type(e).__name__
+            print(f"[GEE] ADC initialization note ({err_type}): Live satellite processing unavailable; retaining demo fallback.")
+            return {"authenticated": False, "mode": "adc", "reason": f"ADC authentication failed: {err_type}"}
+
+    # Neither mode configured:
+    print("[GEE] Credentials not configured. Live satellite processing unavailable; retaining demo/synthetic fallback mode.")
+    return {"authenticated": False, "mode": "none", "reason": "No credentials configured"}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize DB tables and seeds, start background job queue
-    print("🚀 FloodLens API starting up…")
+    print("[API] FloodLens API starting up...")
     try:
         init_db()
-        print("✅ Database initialized successfully.")
+        print("[API] Database initialized successfully.")
     except Exception as e:
-        print(f"⚠️ Database initialization warning: {e}")
+        print(f"[API] Database initialization warning: {e}")
 
     # Google Earth Engine initialization
-    try:
-        import ee
-        ee.Initialize(project="floodlens-512416")
-        print("✅ Google Earth Engine initialized successfully (project: floodlens-512416).")
-    except Exception as e:
-        print(f"⚠️ Earth Engine initialization note: {e}")
+    app.state.gee_status = init_earth_engine()
 
     try:
         await job_queue.start()
-        print("✅ Background job queue worker pool started.")
+        print("[API] Background job queue worker pool started.")
     except Exception as e:
-        print(f"⚠️ Background job queue startup warning: {e}")
+        print(f"[API] Background job queue startup warning: {e}")
 
     yield
 
     # Shutdown
-    print("🛑 FloodLens API shutting down…")
+    print("[API] FloodLens API shutting down...")
     try:
         await job_queue.stop()
-        print("✅ Background job queue stopped.")
+        print("[API] Background job queue stopped.")
     except Exception as e:
-        print(f"⚠️ Background job queue shutdown error: {e}")
+        print(f"[API] Background job queue shutdown error: {e}")
 
 
 openapi_tags = [
@@ -172,6 +228,9 @@ async def detect_direct(req: DetectRequest, db: Session = Depends(get_db)):
     Executes 4-index computation, majority vote ensemble, and JRC baseline change detection.
     """
     job_id = "JOB-" + str(uuid.uuid4())[:8].upper()
+    mode = str(req.mode or "demo").lower()
+    data_source = "gee_live" if mode == "live" else "synthetic_demo"
+
     job = Job(
         id=job_id,
         status="running",
@@ -186,22 +245,31 @@ async def detect_direct(req: DetectRequest, db: Session = Depends(get_db)):
         aoi_radius_km=float(req.aoi_radius_km),
         pre_date=req.pre_date,
         post_date=req.post_date,
+        data_source=data_source,
     )
     db.add(job)
     db.commit()
 
-    result = execute_pipeline_sync(job_id, req.model_dump(), db)
-    return DetectResultResponse(
-        job_id=job_id,
-        status="completed",
-        flood_extent_km2=result["flood_extent_km2"],
-        permanent_water_km2=result["permanent_water_km2"],
-        total_water_km2=result["total_water_km2"],
-        geojson=result["geojson"],
-        geotiff_outputs=result.get("geotiff_outputs", {}),
-        otsu_thresholds=result.get("otsu_thresholds", {}),
-        message="Detection completed successfully.",
-    )
+    try:
+        result = execute_pipeline_sync(job_id, req.model_dump(), db)
+        return DetectResultResponse(
+            job_id=job_id,
+            status="completed",
+            data_source=result.get("data_source", data_source),
+            flood_extent_km2=result["flood_extent_km2"],
+            permanent_water_km2=result["permanent_water_km2"],
+            total_water_km2=result["total_water_km2"],
+            geojson=result["geojson"],
+            geotiff_outputs=result.get("geotiff_outputs", {}),
+            otsu_thresholds=result.get("otsu_thresholds", {}),
+            message="Detection completed successfully.",
+        )
+    except ValueError as ve:
+        job.status = "failed"
+        job.stage = "failed"
+        job.error_message = str(ve)
+        db.commit()
+        raise HTTPException(status_code=422, detail=str(ve))
 
 
 @app.get("/health", tags=["Config"])
@@ -211,4 +279,5 @@ async def health():
         "service": "FloodLens API",
         "version": "1.0.0",
         "queue": job_queue.get_status(),
+        "gee_status": getattr(app.state, "gee_status", {"authenticated": False, "mode": "none"}),
     }

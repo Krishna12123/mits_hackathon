@@ -60,10 +60,18 @@ def build_settlement_csv_rows(db: Optional[Session] = None) -> List[dict]:
             db.close()
 
 
-def generate_settlement_impact_csv_string(db: Optional[Session] = None) -> str:
+def generate_settlement_impact_csv_string(db: Optional[Session] = None, job_id: Optional[str] = None) -> str:
     """Generates Settlement Impact CSV report as an in-memory string."""
     rows = build_settlement_csv_rows(db)
     output = io.StringIO()
+    if job_id and db:
+        try:
+            from app.models.job import Job
+            job = db.query(Job).filter(Job.id == job_id).first()
+            if job and job.data_source:
+                output.write(f"# Provenance Data Source: {job.data_source}\n")
+        except Exception:
+            pass
     fieldnames = [
         "Settlement Name",
         "District",
@@ -85,7 +93,7 @@ def generate_settlement_impact_csv(job_id: Optional[str] = None, db: Optional[Se
     Generates and saves the Settlement Impact CSV Report to disk.
     Returns the absolute or relative file path to the generated CSV.
     """
-    csv_content = generate_settlement_impact_csv_string(db)
+    csv_content = generate_settlement_impact_csv_string(db, job_id=job_id)
     filename = f"settlement_impact_{job_id or 'latest'}.csv"
     file_path = os.path.join(REPORTS_DIR, filename)
 

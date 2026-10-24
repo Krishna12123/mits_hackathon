@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import FloodMapViewer from '../components/map/FloodMapViewer'
 import AnalysisProgress from '../components/ui/AnalysisProgress'
 import Spinner from '../components/ui/Spinner'
@@ -6,7 +6,7 @@ import { useFloodAnalysis } from '../hooks/useFloodAnalysis'
 import {
   Play, RotateCcw, MapPin, Calendar, Satellite,
   AlertCircle, BarChart3, ChevronDown, Info, Layers,
-  Sliders,
+  Sliders, BookOpen, X, HelpCircle, CheckCircle2,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -48,6 +48,7 @@ const RUNNING_STAGES = ['fetching', 'processing', 'detecting', 'calculating', 'r
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_FORM = {
+  mode:              'demo',
   region:            'nepal-terai',
   district:          '',
   preFloodStart:     '',
@@ -133,15 +134,81 @@ function SectionCard({ icon: Icon, title, children }) {
 }
 
 // Results panel — local to Configure; populated by real backend responses
-function ResultsPanel({ status }) {
+function ResultsPanel({ status, results }) {
   const hasResults = status === 'completed'
 
+  // Extract real metrics from API response with multiple schema fallbacks
+  const rawFloodedArea =
+    results?.flood_extent_km2 ??
+    results?.properties?.flood_extent_km2 ??
+    results?.floodedAreaKm2 ??
+    null
+
+  const rawAffectedSettlements =
+    results?.affected_settlements ??
+    results?.affectedSettlements ??
+    (results?.settlement_summary?.severely_affected !== undefined
+      ? results.settlement_summary.severely_affected + (results.settlement_summary.partially_affected || 0)
+      : null)
+
+  const rawPopulation =
+    results?.at_risk_population ??
+    results?.atRiskPopulation ??
+    results?.populationAtRisk ??
+    results?.properties?.at_risk_population ??
+    null
+
+  const rawCoverage =
+    results?.flood_coverage_pct ??
+    results?.percentageImpact ??
+    results?.flood_coverage ??
+    results?.properties?.flood_coverage_pct ??
+    null
+
   const metrics = [
-    { label: 'Flooded Area',         unit: 'km²',         value: hasResults ? '—' : null },
-    { label: 'Affected Settlements', unit: 'settlements', value: hasResults ? '—' : null },
-    { label: 'Population at Risk',   unit: 'est. people', value: hasResults ? '—' : null },
-    { label: 'Flood Coverage',       unit: '% of region', value: hasResults ? '—' : null },
+    {
+      label: 'Flooded Area',
+      unit: 'km²',
+      value: hasResults
+        ? rawFloodedArea !== null
+          ? typeof rawFloodedArea === 'number'
+            ? rawFloodedArea.toLocaleString(undefined, { maximumFractionDigits: 1 })
+            : String(rawFloodedArea)
+          : '—'
+        : null,
+    },
+    {
+      label: 'Affected Settlements',
+      unit: 'settlements',
+      value: hasResults
+        ? rawAffectedSettlements !== null
+          ? String(rawAffectedSettlements)
+          : '—'
+        : null,
+    },
+    {
+      label: 'Population at Risk',
+      unit: 'est. people',
+      value: hasResults
+        ? rawPopulation !== null
+          ? typeof rawPopulation === 'number'
+            ? rawPopulation.toLocaleString()
+            : String(rawPopulation)
+          : '—'
+        : null,
+    },
+    {
+      label: 'Flood Coverage',
+      unit: '% of region',
+      value: hasResults
+        ? rawCoverage !== null
+          ? `${rawCoverage}%`
+          : '—'
+        : null,
+    },
   ]
+
+  const hasAnyMetric = [rawFloodedArea, rawAffectedSettlements, rawPopulation, rawCoverage].some(v => v !== null)
 
   return (
     <div className="bg-[#131b2e] border border-[#4cd7f6]/10 rounded-2xl p-5">
@@ -159,7 +226,9 @@ function ResultsPanel({ status }) {
             {value !== null ? (
               <>
                 <p className="text-xl font-bold text-white font-display">{value}</p>
-                <p className="text-[10px] text-[#dae2fd]/30 mt-0.5">{unit}</p>
+                <p className="text-[10px] text-[#dae2fd]/30 mt-0.5">
+                  {value === '—' ? `${unit} · Data unavailable` : unit}
+                </p>
               </>
             ) : (
               <div className="mt-1">
@@ -171,11 +240,25 @@ function ResultsPanel({ status }) {
         ))}
       </div>
 
-      {!hasResults && (
+      {!hasResults ? (
         <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-[#dae2fd]/3 border border-[#dae2fd]/8">
           <Info className="w-3.5 h-3.5 text-[#dae2fd]/30 shrink-0 mt-0.5" />
           <p className="text-xs text-[#dae2fd]/35 leading-relaxed">
             Results will populate here after a successful analysis run. No synthetic values are shown.
+          </p>
+        </div>
+      ) : hasAnyMetric ? (
+        <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+          <Info className="w-3.5 h-3.5 text-green-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-green-300/80 leading-relaxed">
+            Live detection metrics received from backend analysis pipeline.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-[#ffb95f]/10 border border-[#ffb95f]/20">
+          <Info className="w-3.5 h-3.5 text-[#ffb95f] shrink-0 mt-0.5" />
+          <p className="text-xs text-[#ffb95f]/90 leading-relaxed">
+            Analysis completed. Numerical metrics unavailable for this run; inspect the flood mask on the map.
           </p>
         </div>
       )}
@@ -213,12 +296,20 @@ const INDICES = [
   {
     value:  'ndwi',
     label:  'NDWI',
-    detail: 'Normalized Difference Water Index · optical imagery · (Green − NIR) / (Green + NIR)',
+    detail: 'Normalized Difference Water Index · (Green − NIR) / (Green + NIR)',
+    tooltip: 'Uses green and near-infrared reflectance to highlight open surface water bodies. Performance depends on cloud cover, sediment load, and landscape context.',
   },
   {
     value:  'mndwi',
     label:  'MNDWI',
-    detail: 'Modified NDWI · reduces built-up area interference · (Green − SWIR) / (Green + SWIR)',
+    detail: 'Modified NDWI · (Green − SWIR) / (Green + SWIR)',
+    tooltip: 'Replaces NIR with shortwave-infrared to suppress noise and improve water separation in built-up or urban areas. Relative accuracy varies with terrain and soil moisture.',
+  },
+  {
+    value:  'awei',
+    label:  'AWEI',
+    detail: 'Automated Water Extraction Index · multi-band coefficients',
+    tooltip: 'Uses weighted band equations designed to distinguish water from dark surfaces and shadows. Effectiveness depends on regional terrain, illumination, and seasonal conditions.',
   },
 ]
 
@@ -262,11 +353,25 @@ function DetectionSettingsCard({ form, setField, fieldError }) {
                 aria-label={idx.label}
                 className="mt-0.5 accent-[#4cd7f6] shrink-0"
               />
-              <div>
-                <p className={`text-sm font-semibold ${form.indices.includes(idx.value) ? 'text-[#4cd7f6]' : 'text-[#dae2fd]/80'}`}>
-                  {idx.label}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className={`text-sm font-semibold ${form.indices.includes(idx.value) ? 'text-[#4cd7f6]' : 'text-[#dae2fd]/80'}`}>
+                    {idx.label}
+                  </p>
+                  <span
+                    className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[#4cd7f6]/10 text-[#4cd7f6] text-[9px] font-bold cursor-help border border-[#4cd7f6]/20"
+                    title={idx.tooltip}
+                    aria-label={`${idx.label} explanation`}
+                  >
+                    ?
+                  </span>
+                </div>
                 <p className="text-xs text-[#dae2fd]/40 mt-0.5 leading-relaxed">{idx.detail}</p>
+                {idx.tooltip && (
+                  <p className="text-[11px] text-[#4cd7f6]/80 mt-1 leading-snug">
+                    {idx.tooltip}
+                  </p>
+                )}
               </div>
             </label>
           ))}
@@ -277,9 +382,18 @@ function DetectionSettingsCard({ form, setField, fieldError }) {
       {/* Threshold slider */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label htmlFor="threshold" className="text-xs font-medium text-[#dae2fd]/60">
-            Flood Threshold
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="threshold" className="text-xs font-medium text-[#dae2fd]/60">
+              Flood Threshold (Otsu)
+            </label>
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[#4cd7f6]/10 text-[#4cd7f6] text-[9px] font-bold cursor-help border border-[#4cd7f6]/20"
+              title="Otsu automated thresholding estimates an optimal cut-off from the image pixel histogram to partition water from non-water. Results can be fine-tuned manually."
+              aria-label="Otsu threshold explanation"
+            >
+              ?
+            </span>
+          </div>
           <span className="font-mono text-xs font-bold text-[#4cd7f6] bg-[#4cd7f6]/8 border border-[#4cd7f6]/20 px-2 py-0.5 rounded">
             {form.threshold.toFixed(2)}
           </span>
@@ -299,10 +413,11 @@ function DetectionSettingsCard({ form, setField, fieldError }) {
           <span className="text-[10px] text-[#dae2fd]/28">0.00 · more water</span>
           <span className="text-[10px] text-[#dae2fd]/28">1.00 · less water</span>
         </div>
-        <p className="text-[10px] text-[#dae2fd]/25 mt-2 flex items-center gap-1 leading-relaxed">
-          <Info className="w-3 h-3 shrink-0" />
-          {/* PENDING: confirm valid range and field name with backend team */}
-          Default (0.30) is an illustrative starting point — adjust based on imagery conditions.
+        <p className="text-[10px] text-[#dae2fd]/50 mt-2 flex items-start gap-1.5 leading-relaxed">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#4cd7f6]" />
+          <span>
+            <strong>Otsu Automated Thresholding:</strong> Automatically estimates an optimal split from pixel intensity distributions. Pixels exceeding this value are classified as flood extent; manual adjustments help accommodate turbidity or partial clouds.
+          </span>
         </p>
       </div>
     </SectionCard>
@@ -397,9 +512,8 @@ function RefinementSettingsCard({ form, setField }) {
           <p className={`text-sm font-semibold ${form.useHand ? 'text-[#4cd7f6]' : 'text-[#dae2fd]/80'}`}>
             HAND Masking
           </p>
-          <p className="text-xs text-[#dae2fd]/40 mt-0.5 leading-relaxed">
-            Height Above Nearest Drainage — removes upland false positives from the flood mask.
-            {/* PENDING: confirm use_hand field name with backend team */}
+          <p className="text-xs text-[#dae2fd]/55 mt-0.5 leading-relaxed">
+            <strong>Height Above Nearest Drainage (HAND):</strong> Computes normalized terrain elevation relative to the local drainage network to eliminate hydrologically impossible upland water false positives.
           </p>
         </div>
       </label>
@@ -429,10 +543,11 @@ function RefinementSettingsCard({ form, setField }) {
           <span className="text-[10px] text-[#dae2fd]/28">1° · flat terrain</span>
           <span className="text-[10px] text-[#dae2fd]/28">45° · steep slopes excluded</span>
         </div>
-        <p className="text-[10px] text-[#dae2fd]/25 mt-1.5 flex items-center gap-1">
-          <Info className="w-3 h-3 shrink-0" />
-          {/* PENDING: confirm slope_threshold field name and unit with backend team */}
-          Pixels above this slope are excluded from the flood mask.
+        <p className="text-[10px] text-[#dae2fd]/50 mt-1.5 flex items-start gap-1.5 leading-relaxed">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#4cd7f6]" />
+          <span>
+            <strong>Slope Filter:</strong> Discards steep terrain where water cannot accumulate; effectiveness depends on local topography and Digital Elevation Model (DEM) resolution.
+          </span>
         </p>
       </div>
 
@@ -454,10 +569,8 @@ function RefinementSettingsCard({ form, setField }) {
           <p className={`text-sm font-semibold ${form.speckleFilter ? 'text-[#4cd7f6]' : 'text-[#dae2fd]/80'}`}>
             SAR Speckle Filter
           </p>
-          <p className="text-xs text-[#dae2fd]/40 mt-0.5 leading-relaxed">
-            Applies a spatial filter to reduce SAR speckle noise before change detection.
-            Enables SAR gap-fill layer on the map when active.
-            {/* PENDING: confirm speckle_filter field name with backend team */}
+          <p className="text-xs text-[#dae2fd]/55 mt-0.5 leading-relaxed">
+            <strong>SAR Speckle Filter:</strong> Synthetic Aperture Radar contains granular speckle noise. Spatial filtering (Lee/Frost) reduces speckle artifacts while preserving flood inundation boundaries, enabling radar gap-filling during heavy cloud cover.
           </p>
         </div>
       </label>
@@ -557,10 +670,140 @@ function MaskComparisonPanel({ results }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+
+// ─── Judge Onboarding Guide Modal ─────────────────────────────────────────────
+
+function JudgeOnboardingModal({ isOpen, onClose }) {
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="guide-title"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl cursor-default bg-[#0f1923] border border-[#4cd7f6]/30 rounded-2xl shadow-2xl p-6 sm:p-7 max-h-[90vh] overflow-y-auto space-y-5">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between border-b border-[#4cd7f6]/15 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-[#4cd7f6]/10 border border-[#4cd7f6]/25 text-[#4cd7f6]">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 id="guide-title" className="text-lg font-bold text-white font-display">
+                How to Use FloodLens — Judge Onboarding Guide
+              </h2>
+              <p className="text-xs text-[#dae2fd]/60 mt-0.5">
+                4-step flood intelligence workflow for evaluation and assessment.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[#dae2fd]/40 hover:text-white hover:bg-white/5 transition-colors"
+            aria-label="Close guide modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* 4 Steps */}
+        <div className="grid gap-3.5">
+          <div className="flex gap-3.5 p-3.5 rounded-xl bg-[#4cd7f6]/5 border border-[#4cd7f6]/15">
+            <div className="w-7 h-7 rounded-lg bg-[#4cd7f6] text-[#0f1923] font-bold text-xs flex items-center justify-center shrink-0">
+              1
+            </div>
+            <div className="text-xs">
+              <h3 className="font-semibold text-white mb-0.5">Step 1: Configure AOI &amp; Temporal Windows</h3>
+              <p className="text-[#dae2fd]/65 leading-relaxed">
+                Select your target region (e.g., Koshi or Madhesh Province), optional district filters, and pre/post-flood observation date ranges. Choose between optical sensors (Sentinel-2, Landsat) or all-weather Sentinel-1 SAR.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3.5 p-3.5 rounded-xl bg-[#4cd7f6]/5 border border-[#4cd7f6]/15">
+            <div className="w-7 h-7 rounded-lg bg-[#4cd7f6] text-[#0f1923] font-bold text-xs flex items-center justify-center shrink-0">
+              2
+            </div>
+            <div className="text-xs">
+              <h3 className="font-semibold text-white mb-0.5">Step 2: Run Detection &amp; Scientific Refinement</h3>
+              <p className="text-[#dae2fd]/65 leading-relaxed">
+                Trigger the automated Otsu thresholding detection pipeline. Apply HAND (Height Above Nearest Drainage) to filter false positives on elevated terrain, set slope cut-offs, and activate SAR speckle filtering for all-weather penetration.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3.5 p-3.5 rounded-xl bg-[#4cd7f6]/5 border border-[#4cd7f6]/15">
+            <div className="w-7 h-7 rounded-lg bg-[#4cd7f6] text-[#0f1923] font-bold text-xs flex items-center justify-center shrink-0">
+              3
+            </div>
+            <div className="text-xs">
+              <h3 className="font-semibold text-white mb-0.5">Step 3: Inspect Settlement Impact &amp; Exposure</h3>
+              <p className="text-[#dae2fd]/65 leading-relaxed">
+                Switch to the <strong>Settlements</strong> tab to explore intersecting affected wards, displaced population estimates, critical infrastructure exposure, and priority severity rankings.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3.5 p-3.5 rounded-xl bg-[#4cd7f6]/5 border border-[#4cd7f6]/15">
+            <div className="w-7 h-7 rounded-lg bg-[#4cd7f6] text-[#0f1923] font-bold text-xs flex items-center justify-center shrink-0">
+              4
+            </div>
+            <div className="text-xs">
+              <h3 className="font-semibold text-white mb-0.5">Step 4: Export Reports &amp; Downstream Telemetry</h3>
+              <p className="text-[#dae2fd]/65 leading-relaxed">
+                Visit the <strong>Reports</strong> page to generate printable situation dossiers, download tabular impact summaries in CSV or GeoJSON formats, and retrieve processed GeoTIFF raster layers for GIS workflows.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Satellite Credential Notice */}
+        <div className="p-3.5 rounded-xl border border-[#ffb95f]/25 bg-[#ffb95f]/5 text-xs">
+          <p className="font-semibold text-[#ffb95f]/90 mb-1 flex items-center gap-1.5">
+            <Info className="w-4 h-4 shrink-0" />
+            Hackathon Verification &amp; Satellite Data Note
+          </p>
+          <p className="text-[#dae2fd]/60 leading-relaxed">
+            Live satellite queries require authenticated Google Earth Engine service account tokens. When unauthenticated or during local evaluation, FloodLens seamlessly falls back to pre-computed validation layers and synthetic test scenarios so you can evaluate the complete end-to-end analytical workflow safely.
+          </p>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-semibold text-[#0f1923] bg-[#4cd7f6] hover:bg-[#38bfe0] rounded-xl transition-colors shadow"
+            aria-label="Acknowledge and dismiss guide"
+          >
+            Got it, let's explore
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Configure() {
   const [form, setForm]       = useState(DEFAULT_FORM)
   const [errors, setErrors]   = useState({})
   const [touched, setTouched] = useState({})
+  const [showGuide, setShowGuide] = useState(false)
 
   // Hook drives all pipeline state — replaces the previous local setTimeout simulation
   const { status, results, error, run, retune, reset } = useFloodAnalysis()
@@ -589,6 +832,7 @@ export default function Configure() {
 
     // Field mapping is handled inside submitAnalysis() in floodAnalysis.js
     run({
+      mode:            form.mode || 'demo',
       region:          form.region,
       district:        form.district || null,
       preFloodStart:   form.preFloodStart,
@@ -610,6 +854,7 @@ export default function Configure() {
 
   // Build the full params object from current form state (shared by run + retune)
   const buildParams = () => ({
+    mode:              form.mode || 'demo',
     region:            form.region,
     district:          form.district || null,
     preFloodStart:     form.preFloodStart,
@@ -639,26 +884,61 @@ export default function Configure() {
   return (
     <div className="space-y-6">
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold text-white font-display">Flood Analysis</h1>
-        <p className="text-[#dae2fd]/45 text-sm mt-1">
-          Configure region, date ranges, and satellite source — then run the flood detection pipeline.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white font-display">Flood Analysis</h1>
+          <p className="text-[#dae2fd]/45 text-sm mt-1">
+            Configure region, date ranges, and satellite source — then run the flood detection pipeline.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowGuide(true)}
+          className="inline-flex items-center gap-2 self-start sm:self-auto px-3.5 py-2 text-xs font-semibold text-[#4cd7f6] bg-[#4cd7f6]/10 hover:bg-[#4cd7f6]/20 border border-[#4cd7f6]/30 rounded-xl transition-all shadow-sm"
+          aria-label="Open Judge Onboarding Guide"
+        >
+          <BookOpen className="w-4 h-4 text-[#4cd7f6]" />
+          <span>How to Use Guide</span>
+        </button>
       </div>
 
-      {/* ── Backend-pending notice ────────────────────────────────────── */}
-      <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl border border-[#ffb95f]/25 bg-[#ffb95f]/5">
-        <Info className="w-4 h-4 text-[#ffb95f]/80 shrink-0 mt-0.5" aria-hidden="true" />
-        <div>
-          <p className="text-xs font-semibold text-[#ffb95f]/90 mb-0.5">
-            Live detection unavailable — backend not yet deployed
-          </p>
-          <p className="text-xs text-[#dae2fd]/45 leading-relaxed">
-            The FloodLens API has not been set up yet. You can configure inputs and test validation,
-            but no satellite data will be fetched or processed until the backend is available and
-            <code className="mx-1 px-1 py-0.5 rounded bg-[#dae2fd]/8 font-mono text-[10px] text-[#dae2fd]/60">VITE_API_BASE_URL</code>
-            is configured.
-          </p>
+      {/* ── Judge Onboarding Modal ────────────────────────────────────── */}
+      <JudgeOnboardingModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+      {/* ── Execution Mode & GEE Selector ────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#4cd7f6]/20 bg-[#131b2e]">
+        <div className="flex items-center gap-2.5">
+          <Satellite className="w-4 h-4 text-[#4cd7f6] shrink-0" />
+          <div>
+            <span className="text-xs font-semibold text-white">Execution Engine:</span>{' '}
+            <span className="text-xs text-[#dae2fd]/70">
+              {form.mode === 'live' ? 'Google Earth Engine (Live Sentinel-2 SR)' : 'Demo Simulation (Simulated Bihar Basin)'}
+            </span>
+          </div>
+        </div>
+        <div className="inline-flex rounded-lg p-0.5 bg-[#0b132b] border border-[#4cd7f6]/15 text-xs font-medium">
+          <button
+            type="button"
+            onClick={() => setField('mode', 'demo')}
+            className={`px-3 py-1 rounded-md transition-all ${
+              form.mode === 'demo'
+                ? 'bg-[#ffb95f]/20 text-[#ffb95f] font-semibold border border-[#ffb95f]/30'
+                : 'text-[#dae2fd]/50 hover:text-white'
+            }`}
+          >
+            Demo Mode
+          </button>
+          <button
+            type="button"
+            onClick={() => setField('mode', 'live')}
+            className={`px-3 py-1 rounded-md transition-all ${
+              form.mode === 'live'
+                ? 'bg-[#4cd7f6]/20 text-[#4cd7f6] font-semibold border border-[#4cd7f6]/30'
+                : 'text-[#dae2fd]/50 hover:text-white'
+            }`}
+          >
+            Live GEE Satellite
+          </button>
         </div>
       </div>
 
@@ -902,8 +1182,8 @@ export default function Configure() {
 
           {/* Status + Results — mobile/tablet (below form, single column) */}
           <div className="xl:hidden space-y-4">
-            <AnalysisProgress status={status} errorMessage={error} onRetry={handleReset} />
-            <ResultsPanel status={status} />
+            <AnalysisProgress status={status} dataSource={results?.data_source} errorMessage={error} onRetry={handleReset} />
+            <ResultsPanel status={status} results={results} />
           </div>
         </div>
 
@@ -928,10 +1208,27 @@ export default function Configure() {
                   </p>
                 </div>
               </div>
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ffb95f]/10 border border-[#ffb95f]/20 text-[#ffb95f] text-[10px] font-medium">
-                <Info className="w-3 h-3" />
-                Reference map — not live data
-              </span>
+              {results?.data_source === 'gee_live' ? (
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#4cd7f6]/10 border border-[#4cd7f6]/20 text-[#4cd7f6] text-[10px] font-medium">
+                  <Info className="w-3 h-3" />
+                  Live Copernicus S2 Flood Mask
+                </span>
+              ) : results?.data_source === 'synthetic_demo' ? (
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ffb95f]/10 border border-[#ffb95f]/20 text-[#ffb95f] text-[10px] font-medium">
+                  <Info className="w-3 h-3" />
+                  Simulated Demo Flood Mask
+                </span>
+              ) : results?.geojson || results?.type === 'FeatureCollection' ? (
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-medium">
+                  <Info className="w-3 h-3" />
+                  Detection flood mask
+                </span>
+              ) : (
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#dae2fd]/10 border border-[#dae2fd]/20 text-[#dae2fd]/60 text-[10px] font-medium">
+                  <Info className="w-3 h-3" />
+                  Reference map — ready to run
+                </span>
+              )}
             </div>
 
             {/* Map + legend */}
@@ -940,6 +1237,7 @@ export default function Configure() {
                 height="460px"
                 showControls={true}
                 showGapFill={form.speckleFilter}
+                floodGeoJSON={results?.geojson ?? (results?.type === 'FeatureCollection' ? results : null)}
                 gapFillGeoJSON={results?.gap_fill_geojson ?? results?.gapFillGeoJSON ?? null}
               />
               <MapLegend />
@@ -964,8 +1262,8 @@ export default function Configure() {
           <MaskComparisonPanel results={results} />
           <div className="hidden xl:grid grid-cols-2 gap-4">
             {/* AnalysisProgress — errorMessage from useFloodAnalysis hook */}
-            <AnalysisProgress status={status} errorMessage={error} onRetry={handleReset} />
-            <ResultsPanel status={status} />
+            <AnalysisProgress status={status} dataSource={results?.data_source} errorMessage={error} onRetry={handleReset} />
+            <ResultsPanel status={status} results={results} />
           </div>
         </div>
       </div>

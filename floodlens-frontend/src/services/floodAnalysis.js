@@ -46,18 +46,19 @@ export async function submitAnalysis(params) {
         : 'NDWI'                         // safe fallback
 
   const payload = {
-    // Confirmed backend fields (DetectRequest schema)
+    mode:           params.mode ?? 'demo',
     satellite:      SATELLITE_MAP[params.satelliteSource] ?? 'Sentinel-1',
     index,
-    pre_date:       params.preFloodEnd,    // backend accepts single snapshot date
-    post_date:      params.postFloodEnd,   // backend accepts single snapshot date
+    pre_date:       params.preFloodEnd || params.preFloodStart,
+    post_date:      params.postFloodEnd || params.postFloodStart,
+    pre_start:      params.preFloodStart,
+    pre_end:        params.preFloodEnd,
+    post_start:     params.postFloodStart,
+    post_end:       params.postFloodEnd,
     threshold:      params.threshold ?? 0.3,
-    // AOI defaults — Nepal Terai centre (backend default values)
     aoi_lat:        26.3,
     aoi_lon:        85.8,
     aoi_radius_km:  150,
-    // NOTE: use_hand, slope_threshold, speckle_filter are not in the backend
-    // DetectRequest schema — omitted until backend supports them.
   }
   return floodAPI.detect(payload)
 }

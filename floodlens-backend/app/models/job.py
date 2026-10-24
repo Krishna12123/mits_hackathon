@@ -20,6 +20,7 @@ class Job(Base):
     aoi_radius_km = Column(Float, default=150.0)
     pre_date = Column(String(32), nullable=False)
     post_date = Column(String(32), nullable=False)
+    data_source = Column(String(32), nullable=True, default=None)  # gee_live, synthetic_demo, untracked
 
     # Outputs
     flood_extent_km2 = Column(Float, nullable=True)
