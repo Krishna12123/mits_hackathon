@@ -131,6 +131,33 @@ class AsyncJobQueue:
                 break
             except Exception as e:
                 logger.error(f"[Worker-{worker_id}] Unhandled error: {e}")
+                broadcast_needed = False
+                try:
+                    err_db = SessionLocal()
+                    failed_job = err_db.query(Job).filter(Job.id == job_id).first()
+                    if failed_job and failed_job.status == "running":
+                        failed_job.status = "failed"
+                        failed_job.stage = "failed"
+                        failed_job.error_message = f"Worker unhandled error: {e}"
+                        err_db.commit()
+                        broadcast_needed = True
+                    elif failed_job is None:
+                        broadcast_needed = True
+                    err_db.close()
+                except Exception as db_err:
+                    logger.error(f"Failed to record worker-level failure for {job_id}: {db_err}")
+                    broadcast_needed = True
+
+                if broadcast_needed:
+                    try:
+                        await manager.broadcast({
+                            "event": "job_failed",
+                            "job_id": job_id,
+                            "status": "failed",
+                            "error": str(e),
+                        })
+                    except Exception as ws_err:
+                        logger.error(f"Failed to broadcast worker-level failure for {job_id}: {ws_err}")
             finally:
                 if job_id in self.active_jobs:
                     del self.active_jobs[job_id]
@@ -172,24 +199,57 @@ class AsyncJobQueue:
             )
 
             # Execute pipeline
+            mode = str(req_data.get("mode", "demo")).lower()
             lat = float(req_data.get("aoi_lat", 26.3))
             lon = float(req_data.get("aoi_lon", 85.8))
             radius_km = float(req_data.get("aoi_radius_km", 150.0))
             pre_date = req_data.get("pre_date", "2026-10-11")
             post_date = req_data.get("post_date", "2026-10-19")
+            pre_start = req_data.get("pre_start")
+            pre_end = req_data.get("pre_end")
+            post_start = req_data.get("post_start")
+            post_end = req_data.get("post_end")
             min_votes = int(req_data.get("min_votes", 2))
             save_geotiffs = bool(req_data.get("save_geotiff", True))
 
-            result = detection_pipeline.run_detection(
-                job_id=job_id,
-                lat=lat,
-                lon=lon,
-                radius_km=radius_km,
-                pre_date=pre_date,
-                post_date=post_date,
-                min_votes=min_votes,
-                save_geotiffs=save_geotiffs,
-            )
+            if mode == "live":
+                import main
+                gee_status = getattr(main.app.state, "gee_status", {"authenticated": False})
+                if not gee_status.get("authenticated", False):
+                    raise ValueError(
+                        "Earth Engine is not authenticated. Please configure GEE credentials in .env or switch to Demo mode."
+                    )
+                import ee
+                from app.services.flood_service import detect_flood
+                delta = radius_km / 111.0
+                aoi = ee.Geometry.Rectangle([lon - delta, lat - delta, lon + delta, lat + delta])
+                result = detect_flood(
+                    aoi=aoi,
+                    pre_start=pre_start or pre_date,
+                    pre_end=pre_end or pre_date,
+                    post_start=post_start or post_date,
+                    post_end=post_end or post_date,
+                    job_id=job_id,
+                    save_geotiffs=save_geotiffs,
+                )
+                if result.get("status") != "analysis_complete":
+                    raise ValueError(
+                        f"Live Earth Engine analysis stopped: {result.get('message', 'No suitable imagery found')} ({result.get('status')})"
+                    )
+                data_source = "gee_live"
+            else:
+                result = detection_pipeline.run_detection(
+                    job_id=job_id,
+                    lat=lat,
+                    lon=lon,
+                    radius_km=radius_km,
+                    pre_date=pre_date,
+                    post_date=post_date,
+                    min_votes=min_votes,
+                    save_geotiffs=save_geotiffs,
+                )
+                data_source = "synthetic_demo"
+                result["data_source"] = data_source
 
             # Stage 4: Settlement impact & report generation (90%)
             await self._update_job_state(
@@ -239,11 +299,12 @@ class AsyncJobQueue:
                     job.status = "completed"
                     job.stage = "completed"
                     job.progress = 100
+                    job.data_source = result.get("data_source", data_source)
                     job.flood_extent_km2 = result["flood_extent_km2"]
                     job.affected_districts = 3
                     job.at_risk_population = int(result["flood_extent_km2"] * 4800)
-                    job.ndwi_score = result["otsu_thresholds"].get("NDWI", 0.74)
-                    job.result_geojson = result["geojson"]
+                    job.ndwi_score = result.get("otsu_thresholds", {}).get("NDWI", 0.74)
+                    job.result_geojson = result.get("geojson")
                     db.commit()
 
             finally:

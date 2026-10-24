@@ -69,6 +69,12 @@ export const reportAPI = {
   download: (id) => api.get(`/reports/${id}/download`, { responseType: 'blob' }),
 }
 
+// ── Live Telemetry / Dashboard ──────────────────────────────
+export const liveAPI = {
+  /** Get live telemetry, stat cards, timeline, and job feed */
+  get: () => api.get('/live'),
+}
+
 // ── Config / AOI ─────────────────────────────────────────────
 export const configAPI = {
   /** Save AOI */

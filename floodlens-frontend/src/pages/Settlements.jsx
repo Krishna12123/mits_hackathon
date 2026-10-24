@@ -66,7 +66,7 @@ function PieCustomTooltip({ active, payload }) {
     return (
       <div className="bg-[#0b1326]/95 border border-[#4cd7f6]/25 rounded-xl px-3 py-2 text-xs shadow-xl backdrop-blur-md">
         <p className="font-semibold text-white">{item.name}</p>
-        <p className="text-[#dae2fd]/70 mt-0.5">
+        <p className="text-[#dae2fd]/90 mt-0.5">
           Count: <span className="font-bold text-white font-mono">{item.value}</span>
           {item.payload?.pct !== undefined ? ` (${item.payload.pct}%)` : ''}
         </p>
@@ -83,11 +83,11 @@ function BarCustomTooltip({ active, payload }) {
     return (
       <div className="bg-[#0b1326]/95 border border-[#4cd7f6]/25 rounded-xl px-3 py-2 text-xs shadow-xl backdrop-blur-md">
         <p className="font-semibold text-white">{item.name} Impact Tier</p>
-        <p className="text-[#dae2fd]/70 mt-0.5">
+        <p className="text-[#dae2fd]/90 mt-0.5">
           Settlements: <span className="font-bold text-white font-mono">{item.count}</span>
         </p>
         {item.count > 0 && item.avgFloodedPct !== undefined && (
-          <p className="text-[#dae2fd]/50 text-[10px] mt-0.5">
+          <p className="text-[#dae2fd]/80 text-[11px] mt-0.5">
             Avg Flood Extent: {item.avgFloodedPct}%
           </p>
         )}
@@ -432,9 +432,11 @@ export default function Settlements() {
       // 1. Query existing backend reports endpoint for genuine GeoTIFF artifacts
       const response = await reportAPI.list()
       const reports = response?.reports ?? (Array.isArray(response) ? response : [])
-      const tiffReport = reports.find(
-        r => r.type?.toLowerCase() === 'geotiff' && r.status === 'ready'
-      )
+      // Prioritize final classified flood raster, or fallback to first ready GeoTIFF
+      const tiffReport =
+        reports.find(r => r.type?.toLowerCase() === 'geotiff' && r.status === 'ready' && r.id?.includes('FINAL_FLOOD')) ||
+        reports.find(r => r.type?.toLowerCase() === 'geotiff' && r.status === 'ready' && r.id?.startsWith('JOB-')) ||
+        reports.find(r => r.type?.toLowerCase() === 'geotiff' && r.status === 'ready')
 
       if (tiffReport && tiffReport.id) {
         // 2. Stream and preserve genuine binary .tif file via reportAPI
