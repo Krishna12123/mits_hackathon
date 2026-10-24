@@ -340,6 +340,7 @@ app.include_router(auth.router,          prefix="/api/auth",        tags=["Auth"
 app.include_router(flood.router,         prefix="/api/flood",       tags=["Flood Detection"])
 app.include_router(refine.router,        prefix="/api/refine",      tags=["Refinement"])
 app.include_router(refine.router,        prefix="/refine",          include_in_schema=False)
+app.include_router(impact.router,        prefix="/api/impact",      tags=["Settlement Impact"])
 app.include_router(settlements.router,   prefix="/api/settlements",  tags=["Settlements"])
 app.include_router(live.router,          prefix="/api/live",         tags=["Live Dashboard"])
 app.include_router(reports.router,       prefix="/api/reports",      tags=["Reports"])
@@ -351,6 +352,7 @@ app.include_router(ws.router,                                        tags=["Real
 app.include_router(auth.router,          prefix="/auth",            include_in_schema=False)
 app.include_router(flood.router,         prefix="/flood",           include_in_schema=False)
 app.include_router(refine.router,        prefix="/refine",          include_in_schema=False)
+app.include_router(impact.router,        prefix="/impact",          include_in_schema=False)
 app.include_router(settlements.router,   prefix="/settlements",     include_in_schema=False)
 app.include_router(live.router,          prefix="/live",            include_in_schema=False)
 app.include_router(reports.router,       prefix="/reports",         include_in_schema=False)
@@ -363,6 +365,7 @@ app.include_router(accuracy.router,      prefix="/accuracy",        include_in_s
 @app.get("/", tags=["Config"])
 def home():
     return {
+        "message": "FloodLens API is running!",
         "service": "FloodLens API 🛰️",
         "team": "Code Matrix",
         "hackathon": "NAKSHATRA 2026",
